@@ -15,10 +15,20 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "${rootDir}/streamflow.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "streamflow123"
+            keyAlias = System.getenv("KEY_ALIAS") ?: "streamflow"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "streamflow123"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

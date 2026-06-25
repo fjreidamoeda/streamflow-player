@@ -37,6 +37,13 @@ jobs:
       - name: Create local.properties
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
 
+      - name: Generate keystore for signing
+        run: |
+          keytool -genkey -v -keystore streamflow.keystore \
+            -alias streamflow -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass streamflow123 -keypass streamflow123 \
+            -dname "CN=StreamFlow, OU=Development, O=StreamFlow, L=Sao Paulo, ST=SP, C=BR"
+
       - name: Build
         run: |
           gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/gradle_output.txt
