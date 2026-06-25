@@ -32,7 +32,7 @@
             android:exported="false" />
 
         <activity
-            android:name=".SetupActivity"
+            android:name=".LoginActivity"
             android:exported="false" />
 
     </application>

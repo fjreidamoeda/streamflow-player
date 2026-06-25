@@ -10,8 +10,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
 
-class ChannelAdapter(private val onClick: (M3UChannel) -> Unit) :
-    ListAdapter<M3UChannel, ChannelAdapter.ViewHolder>(DiffCallback()) {
+class ChannelAdapter(private val onClick: (XtreamStream) -> Unit) :
+    ListAdapter<XtreamStream, ChannelAdapter.ViewHolder>(DiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -28,20 +28,20 @@ class ChannelAdapter(private val onClick: (M3UChannel) -> Unit) :
         private val tvName: TextView = itemView.findViewById(R.id.tvChannelName)
         private val tvGroup: TextView = itemView.findViewById(R.id.tvChannelGroup)
 
-        fun bind(channel: M3UChannel, onClick: (M3UChannel) -> Unit) {
-            tvName.text = channel.name
-            tvGroup.text = channel.group
-            if (channel.logo.isNotBlank()) {
-                Picasso.get().load(channel.logo).placeholder(R.drawable.ic_tv).into(ivLogo)
+        fun bind(stream: XtreamStream, onClick: (XtreamStream) -> Unit) {
+            tvName.text = stream.name
+            tvGroup.text = "ID: ${stream.streamId}"
+            if (stream.streamIcon.isNotBlank()) {
+                Picasso.get().load(stream.streamIcon).placeholder(R.drawable.ic_tv).into(ivLogo)
             } else {
                 ivLogo.setImageResource(R.drawable.ic_tv)
             }
-            itemView.setOnClickListener { onClick(channel) }
+            itemView.setOnClickListener { onClick(stream) }
         }
     }
 
-    class DiffCallback : DiffUtil.ItemCallback<M3UChannel>() {
-        override fun areItemsTheSame(old: M3UChannel, new: M3UChannel) = old.url == new.url
-        override fun areContentsTheSame(old: M3UChannel, new: M3UChannel) = old == new
+    class DiffCallback : DiffUtil.ItemCallback<XtreamStream>() {
+        override fun areItemsTheSame(old: XtreamStream, new: XtreamStream) = old.streamId == new.streamId
+        override fun areContentsTheSame(old: XtreamStream, new: XtreamStream) = old == new
     }
 }

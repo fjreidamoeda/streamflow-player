@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
         if (configManager.isConfigured) {
             startActivity(Intent(this, PlayerActivity::class.java))
         } else {
-            startActivity(Intent(this, SetupActivity::class.java))
+            startActivity(Intent(this, LoginActivity::class.java))
         }
 
         finish()
