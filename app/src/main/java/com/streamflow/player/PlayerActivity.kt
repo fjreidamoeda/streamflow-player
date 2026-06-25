@@ -1,6 +1,6 @@
 package com.streamflow.player
 
-import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.View
 import android.widget.*
@@ -21,112 +21,140 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var configManager: ConfigManager
     private lateinit var networkUtils: NetworkUtils
     private var exoPlayer: ExoPlayer? = null
+    private var currentMenu = MenuType.LIVE
+    private var selectedCategoryId: String? = null
+    private var selectedSeries: SeriesItemInfo? = null
+    private var showingEpisodes = false
 
+    private lateinit var btnMenuLive: Button
+    private lateinit var btnMenuMovies: Button
+    private lateinit var btnMenuSeries: Button
+    private lateinit var rvCategories: RecyclerView
+    private lateinit var rvContent: RecyclerView
     private lateinit var playerView: PlayerView
-    private lateinit var rvChannels: RecyclerView
-    private lateinit var spinnerCategories: Spinner
     private lateinit var tvNowPlaying: TextView
     private lateinit var tvAppName: TextView
     private lateinit var progressBar: ProgressBar
-    private lateinit var btnLogout: ImageButton
-    private lateinit var btnRefresh: ImageButton
-    private lateinit var layoutPlayer: LinearLayout
+    private lateinit var mainLayout: View
+    private lateinit var columnCategories: View
+    private lateinit var columnContent: View
+    private lateinit var columnPlayer: View
 
     private var categories = listOf<XtreamCategory>()
-    private var allStreams = listOf<XtreamStream>()
-    private var filteredStreams = listOf<XtreamStream>()
-    private var adapter: ChannelAdapter? = null
+    private var contentItems = listOf<ContentItem>()
+    private var categoryAdapter: CategoryAdapter? = null
+    private var contentAdapter: ContentAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         setContentView(R.layout.activity_player)
 
         configManager = ConfigManager(this)
         networkUtils = NetworkUtils()
 
         if (!configManager.isConfigured) {
-            startActivity(Intent(this, LoginActivity::class.java))
+            startActivity(android.content.Intent(this, LoginActivity::class.java))
             finish()
             return
         }
 
-        playerView = findViewById(R.id.playerView)
-        rvChannels = findViewById(R.id.rvChannels)
-        spinnerCategories = findViewById(R.id.spinnerGroups)
-        tvNowPlaying = findViewById(R.id.tvNowPlaying)
         tvAppName = findViewById(R.id.tvAppName)
+        btnMenuLive = findViewById(R.id.btnMenuLive)
+        btnMenuMovies = findViewById(R.id.btnMenuMovies)
+        btnMenuSeries = findViewById(R.id.btnMenuSeries)
+        rvCategories = findViewById(R.id.rvCategories)
+        rvContent = findViewById(R.id.rvContent)
+        playerView = findViewById(R.id.playerView)
+        tvNowPlaying = findViewById(R.id.tvNowPlaying)
         progressBar = findViewById(R.id.progressBar)
-        btnLogout = findViewById(R.id.btnSetup)
-        btnRefresh = findViewById(R.id.btnRefresh)
-        layoutPlayer = findViewById(R.id.layoutPlayer)
+        mainLayout = findViewById(R.id.mainLayout)
+        columnCategories = findViewById(R.id.columnCategories)
+        columnContent = findViewById(R.id.columnContent)
+        columnPlayer = findViewById(R.id.columnPlayer)
 
         tvAppName.text = configManager.appName.ifBlank { "StreamFlow" }
 
-        rvChannels.layoutManager = LinearLayoutManager(this)
+        rvCategories.layoutManager = LinearLayoutManager(this)
+        rvContent.layoutManager = LinearLayoutManager(this)
 
-        spinnerCategories.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, pos: Int, id: Long) {
-                if (pos == 0) filteredStreams = allStreams
-                else {
-                    val catId = categories.getOrNull(pos - 1)?.categoryId
-                    filteredStreams = allStreams.filter { it.categoryId == catId }
-                }
-                adapter = ChannelAdapter { stream -> playStream(stream) }
-                rvChannels.adapter = adapter
-                adapter?.submitList(filteredStreams)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>) {}
+        btnMenuLive.setOnClickListener { switchMenu(MenuType.LIVE) }
+        btnMenuMovies.setOnClickListener { switchMenu(MenuType.VOD) }
+        btnMenuSeries.setOnClickListener { switchMenu(MenuType.SERIES) }
+
+        findViewById<ImageButton>(R.id.btnRefresh).setOnClickListener {
+            selectedCategoryId = null
+            selectedSeries = null
+            showingEpisodes = false
+            loadCategories()
         }
-
-        btnLogout.setOnClickListener {
+        findViewById<ImageButton>(R.id.btnLogout).setOnClickListener {
             exoPlayer?.release()
             configManager.clear()
-            startActivity(Intent(this, LoginActivity::class.java))
+            startActivity(android.content.Intent(this, LoginActivity::class.java))
             finish()
         }
 
-        btnRefresh.setOnClickListener { loadCategories() }
+        switchMenu(MenuType.LIVE)
+    }
+
+    private fun switchMenu(type: MenuType) {
+        currentMenu = type
+        selectedCategoryId = null
+        selectedSeries = null
+        showingEpisodes = false
+
+        val activated = 0xffe63e2e.toInt()
+        val deactivated = 0xff333333.toInt()
+        val activeText = 0xffffffff.toInt()
+        val inactiveText = 0xffaaaaaa.toInt()
+
+        btnMenuLive.setBackgroundColor(if (type == MenuType.LIVE) activated else deactivated)
+        btnMenuLive.setTextColor(if (type == MenuType.LIVE) activeText else inactiveText)
+        btnMenuMovies.setBackgroundColor(if (type == MenuType.VOD) activated else deactivated)
+        btnMenuMovies.setTextColor(if (type == MenuType.VOD) activeText else inactiveText)
+        btnMenuSeries.setBackgroundColor(if (type == MenuType.SERIES) activated else deactivated)
+        btnMenuSeries.setTextColor(if (type == MenuType.SERIES) activeText else inactiveText)
+
+        tvNowPlaying.text = when (type) {
+            MenuType.LIVE -> "Canais ao vivo"
+            MenuType.VOD -> "Filmes"
+            MenuType.SERIES -> "Series"
+        }
 
         loadCategories()
     }
 
     private fun loadCategories() {
+        categoryAdapter = null
+        rvCategories.adapter = null
+        contentAdapter = null
+        rvContent.adapter = null
+        contentItems = listOf()
+
         progressBar.visibility = View.VISIBLE
         CoroutineScope(Dispatchers.Main).launch {
-            val result = networkUtils.getLiveCategories(
-                configManager.panelUrl, configManager.username, configManager.password
-            )
-            withContext(Dispatchers.Main) {
-                result.onSuccess { cats ->
-                    categories = cats
-                    val names = listOf("Todas") + cats.map { it.categoryName }
-                    spinnerCategories.adapter = ArrayAdapter(
-                        this@PlayerActivity,
-                        android.R.layout.simple_spinner_item,
-                        names
-                    ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
-                    loadStreams()
-                }.onFailure { error ->
-                    progressBar.visibility = View.GONE
-                    Toast.makeText(this@PlayerActivity, "Erro: ${error.message}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-    }
-
-    private fun loadStreams() {
-        CoroutineScope(Dispatchers.Main).launch {
-            val result = networkUtils.getLiveStreams(
-                configManager.panelUrl, configManager.username, configManager.password
+            val result = networkUtils.getCategories(
+                configManager.panelUrl, configManager.username, configManager.password, currentMenu
             )
             withContext(Dispatchers.Main) {
                 progressBar.visibility = View.GONE
-                result.onSuccess { streams ->
-                    allStreams = streams
-                    filteredStreams = streams
-                    adapter = ChannelAdapter { stream -> playStream(stream) }
-                    rvChannels.adapter = adapter
-                    adapter?.submitList(filteredStreams)
+                result.onSuccess { cats ->
+                    categories = cats
+                    categoryAdapter = CategoryAdapter(selectedCategoryId) { cat ->
+                        selectedCategoryId = cat.categoryId
+                        selectedSeries = null
+                        showingEpisodes = false
+                        categoryAdapter = CategoryAdapter(selectedCategoryId) { loadContent(cat.categoryId) }
+                        rvCategories.adapter = categoryAdapter
+                        categoryAdapter?.submitList(categories)
+                        loadContent(cat.categoryId)
+                    }
+                    rvCategories.adapter = categoryAdapter
+                    categoryAdapter?.submitList(categories)
+                    if (categories.isNotEmpty()) {
+                        loadContent(categories.first().categoryId)
+                    }
                 }.onFailure { error ->
                     Toast.makeText(this@PlayerActivity, "Erro: ${error.message}", Toast.LENGTH_LONG).show()
                 }
@@ -134,30 +162,100 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun playStream(stream: XtreamStream) {
-        val streamUrl = stream.directSource.ifBlank { stream.streamUrl }
-        if (streamUrl.isBlank()) {
-            Toast.makeText(this, "URL do stream invalida", Toast.LENGTH_SHORT).show()
+    private fun loadContent(categoryId: String?) {
+        contentAdapter = null
+        rvContent.adapter = null
+        contentItems = listOf()
+
+        progressBar.visibility = View.VISIBLE
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = networkUtils.getContent(
+                configManager.panelUrl, configManager.username, configManager.password,
+                currentMenu, categoryId
+            )
+            withContext(Dispatchers.Main) {
+                progressBar.visibility = View.GONE
+                result.onSuccess { items ->
+                    contentItems = items
+                    contentAdapter = ContentAdapter { item -> onContentClicked(item) }
+                    rvContent.adapter = contentAdapter
+                    contentAdapter?.submitList(contentItems)
+                }.onFailure { error ->
+                    Toast.makeText(this@PlayerActivity, "Erro: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun onContentClicked(item: ContentItem) {
+        when (item) {
+            is ContentItem.Live -> playStream(item.streamUrl(
+                configManager.panelUrl, configManager.username, configManager.password
+            ), item.name)
+            is ContentItem.Movie -> playStream(item.streamUrl(
+                configManager.panelUrl, configManager.username, configManager.password
+            ), item.name)
+            is ContentItem.Series -> loadEpisodes(item.series)
+            is ContentItem.Episode -> playStream(item.streamUrl(
+                configManager.panelUrl, configManager.username, configManager.password
+            ), item.name)
+        }
+    }
+
+    private fun loadEpisodes(series: SeriesItemInfo) {
+        selectedSeries = series
+        showingEpisodes = true
+
+        progressBar.visibility = View.VISIBLE
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = networkUtils.getSeriesEpisodes(
+                configManager.panelUrl, configManager.username, configManager.password,
+                series.seriesId
+            )
+            withContext(Dispatchers.Main) {
+                progressBar.visibility = View.GONE
+                result.onSuccess { episodesBySeason ->
+                    val items = mutableListOf<ContentItem>()
+                    for ((season, eps) in episodesBySeason) {
+                        for (ep in eps) {
+                            items.add(ContentItem.Episode(
+                                EpisodeItem(ep, "S$season", series.name)
+                            ))
+                        }
+                    }
+                    contentItems = items
+                    contentAdapter = ContentAdapter { item -> onContentClicked(item) }
+                    rvContent.adapter = contentAdapter
+                    contentAdapter?.submitList(contentItems)
+                }.onFailure { error ->
+                    Toast.makeText(this@PlayerActivity, "Erro: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun playStream(url: String, title: String) {
+        if (url.isBlank()) {
+            Toast.makeText(this, "URL invalida", Toast.LENGTH_SHORT).show()
             return
         }
 
-        tvNowPlaying.text = "▶ ${stream.name}"
-        layoutPlayer.visibility = View.VISIBLE
-        progressBar.visibility = View.VISIBLE
+        tvNowPlaying.text = "▶ $title"
 
         exoPlayer?.release()
         exoPlayer = ExoPlayer.Builder(this).build()
         playerView.player = exoPlayer
 
-        val mediaItem = MediaItem.fromUri(streamUrl)
+        val mediaItem = MediaItem.fromUri(url)
         exoPlayer?.setMediaItem(mediaItem)
         exoPlayer?.prepare()
         exoPlayer?.play()
 
+        progressBar.visibility = View.VISIBLE
         exoPlayer?.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_READY) {
-                    progressBar.visibility = View.GONE
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_READY) {
+                    runOnUiThread { progressBar.visibility = View.GONE }
                 }
             }
         })
