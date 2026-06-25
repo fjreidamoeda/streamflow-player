@@ -1,0 +1,54 @@
+name: Build StreamFlow Player APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build with Gradle
+        run: gradle build assembleRelease --no-daemon
+        working-directory: player_app
+
+      - name: Sign APK (debug keystore)
+        run: |
+          keytool -genkey -v -keystore debug.keystore -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=Debug, O=Android, C=US" 2>/dev/null
+          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+            -keystore debug.keystore -storepass android -keypass android \
+            app/build/outputs/apk/release/*.apk androiddebugkey 2>/dev/null
+        working-directory: player_app
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: StreamFlowPlayer-APK
+          path: player_app/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+      - name: Upload debug APK (fallback)
+        uses: actions/upload-artifact@v4
+        with:
+          name: StreamFlowPlayer-Debug-APK
+          path: player_app/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: ignore
