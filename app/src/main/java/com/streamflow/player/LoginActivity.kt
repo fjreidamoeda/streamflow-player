@@ -17,7 +17,6 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var configManager: ConfigManager
     private lateinit var networkUtils: NetworkUtils
-    private lateinit var etPanelUrl: EditText
     private lateinit var etUsername: EditText
     private lateinit var etPassword: EditText
     private lateinit var btnLogin: Button
@@ -31,22 +30,30 @@ class LoginActivity : AppCompatActivity() {
         configManager = ConfigManager(this)
         networkUtils = NetworkUtils()
 
-        etPanelUrl = findViewById(R.id.etPanelUrl)
         etUsername = findViewById(R.id.etUsername)
         etPassword = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
 
-        etPanelUrl.setText(configManager.panelUrl.ifBlank { "https://" })
+        if (configManager.panelUrl.isBlank()) {
+            startActivity(Intent(this, SetupActivity::class.java))
+            finish()
+            return
+        }
+
+        if (configManager.isConfigured) {
+            startActivity(Intent(this, PlayerActivity::class.java))
+            finish()
+            return
+        }
 
         btnLogin.setOnClickListener {
-            val panelUrl = etPanelUrl.text.toString().trim()
             val username = etUsername.text.toString().trim()
             val password = etPassword.text.toString().trim()
 
-            if (panelUrl.isBlank() || username.isBlank() || password.isBlank()) {
-                tvError.text = "Preencha todos os campos"
+            if (username.isBlank() || password.isBlank()) {
+                tvError.text = "Preencha usuario e senha"
                 tvError.visibility = TextView.VISIBLE
                 return@setOnClickListener
             }
@@ -54,22 +61,27 @@ class LoginActivity : AppCompatActivity() {
             tvError.visibility = TextView.GONE
             progressBar.visibility = ProgressBar.VISIBLE
             btnLogin.isEnabled = false
-            btnLogin.text = "Entrando..."
+            btnLogin.text = "ENTRANDO..."
 
             CoroutineScope(Dispatchers.Main).launch {
-                val result = networkUtils.authenticate(panelUrl, username, password)
+                val result = networkUtils.authenticate(
+                    configManager.panelUrl, username, password
+                )
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = ProgressBar.GONE
                     btnLogin.isEnabled = true
-                    btnLogin.text = "Entrar"
+                    btnLogin.text = "ENTRAR"
 
                     result.onSuccess { userInfo ->
-                        configManager.panelUrl = panelUrl
                         configManager.username = username
                         configManager.password = password
                         configManager.appName = userInfo.username
 
-                        Toast.makeText(this@LoginActivity, "Bem-vindo, ${userInfo.username}!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "Bem-vindo, ${userInfo.username}!",
+                            Toast.LENGTH_LONG
+                        ).show()
                         startActivity(Intent(this@LoginActivity, PlayerActivity::class.java))
                         finish()
                     }.onFailure { error ->

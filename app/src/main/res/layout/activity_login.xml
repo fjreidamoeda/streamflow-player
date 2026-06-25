@@ -25,7 +25,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Entre com seus dados"
+            android:text="Informe seus dados de acesso"
             android:textColor="#888888"
             android:textSize="14sp"
             android:layout_marginTop="4dp"
@@ -43,26 +43,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="URL do Painel"
-                    android:textColor="#aaaaaa"
-                    android:textSize="12sp"
-                    android:layout_marginBottom="6dp" />
-
-                <EditText
-                    android:id="@+id/etPanelUrl"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="https://seudominio.com"
-                    android:textColor="#ffffff"
-                    android:textColorHint="#666666"
-                    android:background="@drawable/bg_input"
-                    android:paddingHorizontal="16dp"
-                    android:inputType="textUri"
-                    android:layout_marginBottom="20dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -108,12 +88,13 @@
                     android:id="@+id/btnLogin"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:text="Entrar"
-                    android:textAllCaps="false"
-                    android:textSize="16sp"
+                    android:text="ENTRAR"
+                    android:textAllCaps="true"
+                    android:textSize="14sp"
                     android:textStyle="bold"
-                    android:backgroundTint="#0f3460"
-                    android:textColor="#ffffff" />
+                    android:backgroundTint="#e63e2e"
+                    android:textColor="#ffffff"
+                    android:letterSpacing="0.1" />
 
                 <ProgressBar
                     android:id="@+id/progressBar"

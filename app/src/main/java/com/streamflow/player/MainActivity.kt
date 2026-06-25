@@ -12,10 +12,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         configManager = ConfigManager(this)
 
-        if (configManager.isConfigured) {
-            startActivity(Intent(this, PlayerActivity::class.java))
-        } else {
-            startActivity(Intent(this, LoginActivity::class.java))
+        when {
+            configManager.isConfigured ->
+                startActivity(Intent(this, PlayerActivity::class.java))
+            configManager.panelUrl.isNotBlank() ->
+                startActivity(Intent(this, LoginActivity::class.java))
+            else ->
+                startActivity(Intent(this, SetupActivity::class.java))
         }
 
         finish()
