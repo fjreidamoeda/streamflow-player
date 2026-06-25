@@ -9,6 +9,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,8 +22,7 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var networkUtils: NetworkUtils
     private var exoPlayer: ExoPlayer? = null
 
-    private lateinit var playerView: com.google.android.material.card.MaterialCardView
-    private lateinit var surfaceView: android.view.SurfaceView
+    private lateinit var playerView: PlayerView
     private lateinit var rvChannels: RecyclerView
     private lateinit var spinnerGroups: Spinner
     private lateinit var tvNowPlaying: TextView
@@ -51,7 +51,6 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         playerView = findViewById(R.id.playerView)
-        surfaceView = findViewById(R.id.surfaceView)
         rvChannels = findViewById(R.id.rvChannels)
         spinnerGroups = findViewById(R.id.spinnerGroups)
         tvNowPlaying = findViewById(R.id.tvNowPlaying)
