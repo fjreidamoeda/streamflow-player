@@ -23,32 +23,25 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.2
 
-      - name: Build with Gradle
-        run: gradle build assembleRelease --no-daemon
-        working-directory: player_app
+      - name: Build APK
+        run: gradle assembleRelease --no-daemon
 
-      - name: Sign APK (debug keystore)
+      - name: Sign APK
         run: |
-          keytool -genkey -v -keystore debug.keystore -alias androiddebugkey \
+          keytool -genkey -v -keystore debug.keystore -alias debug \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass android -keypass android \
-            -dname "CN=Debug, O=Android, C=US" 2>/dev/null
+            -dname "CN=Debug,O=Android,C=US" 2>/dev/null
           jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
             -keystore debug.keystore -storepass android -keypass android \
-            app/build/outputs/apk/release/*.apk androiddebugkey 2>/dev/null
-        working-directory: player_app
+            app/build/outputs/apk/release/*.apk debug 2>/dev/null
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: StreamFlowPlayer-APK
-          path: player_app/app/build/outputs/apk/release/*.apk
-          if-no-files-found: warn
-
-      - name: Upload debug APK (fallback)
-        uses: actions/upload-artifact@v4
-        with:
-          name: StreamFlowPlayer-Debug-APK
-          path: player_app/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: ignore
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
