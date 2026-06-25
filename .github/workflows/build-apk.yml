@@ -44,6 +44,13 @@ jobs:
         env:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
 
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamflow-player-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: warn
+
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v4
