@@ -21,21 +21,16 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.2
+
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" > local.properties
 
       - name: Build APK
-        run: ./gradlew assembleRelease --no-daemon
-
-      - name: Sign APK
-        run: |
-          keytool -genkey -v -keystore debug.keystore -alias debug \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass android -keypass android \
-            -dname "CN=Debug,O=Android,C=US" 2>/dev/null
-          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-            -keystore debug.keystore -storepass android -keypass android \
-            app/build/outputs/apk/release/*.apk debug 2>/dev/null
+        run: gradle assembleRelease --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
