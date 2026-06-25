@@ -25,6 +25,7 @@ class PlayerActivity : AppCompatActivity() {
     private var selectedCategoryId: String? = null
     private var selectedSeries: SeriesItemInfo? = null
     private var showingEpisodes = false
+    private var isFullscreen = false
 
     private lateinit var btnMenuLive: Button
     private lateinit var btnMenuMovies: Button
@@ -81,6 +82,8 @@ class PlayerActivity : AppCompatActivity() {
         btnMenuLive.setOnClickListener { switchMenu(MenuType.LIVE) }
         btnMenuMovies.setOnClickListener { switchMenu(MenuType.VOD) }
         btnMenuSeries.setOnClickListener { switchMenu(MenuType.SERIES) }
+
+        columnPlayer.setOnClickListener { toggleFullscreen() }
 
         findViewById<ImageButton>(R.id.btnRefresh).setOnClickListener {
             selectedCategoryId = null
@@ -259,6 +262,21 @@ class PlayerActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    private fun toggleFullscreen() {
+        isFullscreen = !isFullscreen
+        columnCategories.visibility = if (isFullscreen) View.GONE else View.VISIBLE
+        columnContent.visibility = if (isFullscreen) View.GONE else View.VISIBLE
+        if (isFullscreen) {
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            )
+        } else {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+        }
     }
 
     override fun onPause() {
