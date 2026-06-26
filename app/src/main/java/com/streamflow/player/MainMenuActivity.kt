@@ -45,7 +45,11 @@ class MainMenuActivity : AppCompatActivity() {
             startPlayer(MenuType.SERIES)
         }
         findViewById<CardView>(R.id.cardSettings).setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
+            try {
+                startActivity(Intent(this, SettingsActivity::class.java))
+            } catch (e: Exception) {
+                Toast.makeText(this, "Erro ao abrir config: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
         findViewById<CardView>(R.id.cardGames).setOnClickListener {
             val gamesUrl = configManager.gamesUrl

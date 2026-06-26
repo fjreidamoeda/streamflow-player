@@ -134,9 +134,13 @@ jobs:
           fi
           if [ -n "$BG_URL" ]; then
             curl -sL "$BG_URL" -o app/src/main/res/drawable/bg_main.png
-            # Add background to login/setup layouts by replacing the background color reference
-            sed -i 's|android:background="#1a1a2e"|android:background="@drawable/bg_main"|' app/src/main/res/layout/activity_setup.xml 2>/dev/null || true
-            sed -i 's|android:background="#1a1a2e"|android:background="@drawable/bg_main"|' app/src/main/res/layout/activity_login.xml 2>/dev/null || true
+            # Add background to all layouts
+            for layout in app/src/main/res/layout/activity_*.xml; do
+              sed -i 's|android:background="#1a1a2e"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
+              sed -i 's|android:background="#0f0f23"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
+              sed -i 's|android:background="#151530"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
+              sed -i 's|android:background="#12122a"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
+            done
           fi
 
       - name: Build

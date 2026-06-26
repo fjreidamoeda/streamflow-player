@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
@@ -104,7 +105,11 @@ class PlayerActivity : AppCompatActivity() {
             loadCategories()
         }
         findViewById<ImageButton>(R.id.btnLogout).setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
+            try {
+                startActivity(Intent(this, SettingsActivity::class.java))
+            } catch (e: Exception) {
+                Toast.makeText(this, "Erro ao abrir config: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
 
         val initialMenu = try {
@@ -308,7 +313,13 @@ class PlayerActivity : AppCompatActivity() {
                 hideProgress?.let { handler.removeCallbacks(it) }
                 runOnUiThread {
                     progressBar.visibility = View.GONE
-                    val detail = error.localizedMessage ?: error.cause?.message ?: ""
+                    var detail = error.localizedMessage ?: error.cause?.message ?: ""
+                    if (error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS) {
+                        val cause = error.cause
+                        if (cause is HttpDataSource.InvalidResponseCodeException) {
+                            detail = "HTTP ${cause.responseCode}: ${cause.responseMessage}"
+                        }
+                    }
                     val msg = when (error.errorCode) {
                         androidx.media3.common.PlaybackException.ERROR_CODE_TIMEOUT -> "Tempo limite excedido ao conectar"
                         androidx.media3.common.PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> "Erro de conexão com o servidor"
