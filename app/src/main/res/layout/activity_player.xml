@@ -209,8 +209,7 @@
                         app:show_buffering="when_playing"
                         app:resize_mode="fit"
                         app:show_fastforward_button="false"
-                        app:show_rewind_button="false"
-                        app:show_fullscreen_button="true" />
+                        app:show_rewind_button="false" />
 
                     <ProgressBar
                         android:id="@+id/progressBar"
