@@ -51,6 +51,7 @@ data class VodInfo(
     @SerializedName("category_id") val categoryId: String = "",
     @SerializedName("container_extension") val containerExtension: String = "mp4",
     val rating: String = "0",
+    @SerializedName("stream_url") val streamUrl: String = "",
     @SerializedName("direct_source") val directSource: String = ""
 )
 
@@ -71,7 +72,9 @@ data class EpisodeInfo(
     val id: String = "",
     val title: String = "",
     @SerializedName("container_extension") val containerExtension: String = "mp4",
-    val info: EpisodeInfoData = EpisodeInfoData()
+    val info: EpisodeInfoData = EpisodeInfoData(),
+    @SerializedName("stream_url") val streamUrl: String = "",
+    @SerializedName("direct_source") val directSource: String = ""
 )
 
 data class EpisodeInfoData(
@@ -88,15 +91,16 @@ sealed class ContentItem {
     abstract val name: String
     abstract val icon: String
     abstract val categoryId: String
+    abstract fun streamUrl(panel: String, user: String, pass: String, format: String = ""): String
 
     data class Live(val stream: XtreamStream) : ContentItem() {
         override val name get() = stream.name
         override val icon get() = stream.streamIcon
         override val categoryId get() = stream.categoryId
-        fun streamUrl(panel: String, user: String, pass: String): String {
-            if (stream.directSource.isNotBlank()) return stream.directSource
-            if (stream.streamUrl.isNotBlank()) return stream.streamUrl
-            return "$panel/live/$user/$pass/${stream.streamId}.${stream.containerExtension}"
+        override fun streamUrl(panel: String, user: String, pass: String, format: String): String {
+            return if (stream.streamUrl.isNotBlank()) applyFormat(stream.streamUrl, format)
+            else if (stream.directSource.isNotBlank()) applyFormat(stream.directSource, format)
+            else applyFormat("$panel/live/$user/$pass/${stream.streamId}.${stream.containerExtension}", format)
         }
     }
 
@@ -104,9 +108,10 @@ sealed class ContentItem {
         override val name get() = vod.name
         override val icon get() = vod.streamIcon
         override val categoryId get() = vod.categoryId
-        fun streamUrl(panel: String, user: String, pass: String): String {
-            if (vod.directSource.isNotBlank()) return vod.directSource
-            return "$panel/movie/$user/$pass/${vod.streamId}.${vod.containerExtension}"
+        override fun streamUrl(panel: String, user: String, pass: String, format: String): String {
+            return if (vod.streamUrl.isNotBlank()) applyFormat(vod.streamUrl, format)
+            else if (vod.directSource.isNotBlank()) applyFormat(vod.directSource, format)
+            else applyFormat("$panel/movie/$user/$pass/${vod.streamId}.${vod.containerExtension}", format)
         }
     }
 
@@ -114,14 +119,30 @@ sealed class ContentItem {
         override val name get() = series.name
         override val icon get() = series.cover
         override val categoryId get() = series.categoryId
+        override fun streamUrl(panel: String, user: String, pass: String, format: String): String = ""
     }
 
     data class Episode(val ep: EpisodeItem) : ContentItem() {
         override val name get() = "${ep.seasonNum} - ${ep.episode.title}"
         override val icon get() = ep.episode.info.movieImage
         override val categoryId get() = ""
-        fun streamUrl(panel: String, user: String, pass: String): String {
-            return "$panel/series/$user/$pass/${ep.episode.id}.${ep.episode.containerExtension}"
+        override fun streamUrl(panel: String, user: String, pass: String, format: String): String {
+            return if (ep.episode.streamUrl.isNotBlank()) applyFormat(ep.episode.streamUrl, format)
+            else if (ep.episode.directSource.isNotBlank()) applyFormat(ep.episode.directSource, format)
+            else applyFormat("$panel/series/$user/$pass/${ep.episode.id}.${ep.episode.containerExtension}", format)
+        }
+    }
+
+    companion object {
+        fun applyFormat(url: String, format: String): String {
+            if (format.isBlank()) return url
+            val dot = url.lastIndexOf('.')
+            if (dot < 0) return url
+            val before = url.substring(0, dot)
+            val after = url.substring(dot + 1)
+            val qs = after.indexOf('?')
+            return if (qs >= 0) "$before.$format${after.substring(qs)}"
+            else "$before.$format"
         }
     }
 }
@@ -236,4 +257,29 @@ class NetworkUtils {
                 Result.failure(e)
             }
         }
+
+    suspend fun getApkMessages(panelUrl: String, username: String): Result<List<ApkMessage>> =
+        withContext(Dispatchers.IO) {
+            try {
+                val url = "${panelUrl.trimEnd('/')}/api/apk_mensagens.php?username=$username"
+                val request = Request.Builder().url(url).build()
+                val response = client.newCall(request).execute()
+                val body = response.body?.string() ?: throw Exception("Resposta vazia")
+                val wrapper = gson.fromJson(body, ApkMessageResponse::class.java)
+                Result.success(wrapper.messages ?: emptyList())
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }
+
+data class ApkMessage(
+    val id: String = "",
+    val message: String = "",
+    val target_type: String = "all"
+)
+
+data class ApkMessageResponse(
+    val success: Boolean = false,
+    val messages: List<ApkMessage>? = null
+)

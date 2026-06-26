@@ -20,8 +20,12 @@ class ConfigManager(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("streamflow_config", Context.MODE_PRIVATE)
 
-    var panelUrl: String
+    private var storedPanelUrl: String
         get() = prefs.getString("panel_url", "") ?: ""
+        set(value) = prefs.edit().putString("panel_url", value.trimEnd('/')).apply()
+
+    var panelUrl: String
+        get() = customPanelUrl.ifBlank { storedPanelUrl }
         set(value) = prefs.edit().putString("panel_url", value.trimEnd('/')).apply()
 
     var username: String
@@ -35,6 +39,26 @@ class ConfigManager(context: Context) {
     var appName: String
         get() = prefs.getString("app_name", "StreamFlow") ?: "StreamFlow"
         set(value) = prefs.edit().putString("app_name", value).apply()
+
+    var playerType: String
+        get() = prefs.getString("player_type", "internal") ?: "internal"
+        set(value) = prefs.edit().putString("player_type", value).apply()
+
+    var streamFormat: String
+        get() = prefs.getString("stream_format", "") ?: ""
+        set(value) = prefs.edit().putString("stream_format", value).apply()
+
+    var gamesUrl: String
+        get() = prefs.getString("games_url", "") ?: ""
+        set(value) = prefs.edit().putString("games_url", value).apply()
+
+    var introVideoUrl: String
+        get() = prefs.getString("intro_video_url", "") ?: ""
+        set(value) = prefs.edit().putString("intro_video_url", value).apply()
+
+    var customPanelUrl: String
+        get() = prefs.getString("custom_panel_url", "") ?: ""
+        set(value) = prefs.edit().putString("custom_panel_url", value.trimEnd('/')).apply()
 
     val isConfigured: Boolean
         get() = panelUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank()

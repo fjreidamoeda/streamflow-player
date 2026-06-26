@@ -1,13 +1,19 @@
 package com.streamflow.player
 
+import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -26,6 +32,7 @@ class PlayerActivity : AppCompatActivity() {
     private var selectedSeries: SeriesItemInfo? = null
     private var showingEpisodes = false
     private var isFullscreen = false
+    private val handler = Handler(Looper.getMainLooper())
 
     private lateinit var btnMenuLive: Button
     private lateinit var btnMenuMovies: Button
@@ -92,13 +99,13 @@ class PlayerActivity : AppCompatActivity() {
             loadCategories()
         }
         findViewById<ImageButton>(R.id.btnLogout).setOnClickListener {
-            exoPlayer?.release()
-            configManager.clear()
-            startActivity(android.content.Intent(this, LoginActivity::class.java))
             finish()
         }
 
-        switchMenu(MenuType.LIVE)
+        val initialMenu = try {
+            MenuType.valueOf(intent.getStringExtra("menu_type") ?: "LIVE")
+        } catch (e: Exception) { MenuType.LIVE }
+        switchMenu(initialMenu)
     }
 
     private fun switchMenu(type: MenuType) {
@@ -193,14 +200,17 @@ class PlayerActivity : AppCompatActivity() {
     private fun onContentClicked(item: ContentItem) {
         when (item) {
             is ContentItem.Live -> playStream(item.streamUrl(
-                configManager.panelUrl, configManager.username, configManager.password
+                configManager.panelUrl, configManager.username, configManager.password,
+                configManager.streamFormat
             ), item.name)
             is ContentItem.Movie -> playStream(item.streamUrl(
-                configManager.panelUrl, configManager.username, configManager.password
+                configManager.panelUrl, configManager.username, configManager.password,
+                configManager.streamFormat
             ), item.name)
             is ContentItem.Series -> loadEpisodes(item.series)
             is ContentItem.Episode -> playStream(item.streamUrl(
-                configManager.panelUrl, configManager.username, configManager.password
+                configManager.panelUrl, configManager.username, configManager.password,
+                configManager.streamFormat
             ), item.name)
         }
     }
@@ -245,8 +255,32 @@ class PlayerActivity : AppCompatActivity() {
 
         tvNowPlaying.text = "▶ $title"
 
+        if (configManager.playerType == "external") {
+            exoPlayer?.release()
+            playerView.player = null
+            try {
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(Uri.parse(url), "video/*")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Nenhum player externo encontrado", Toast.LENGTH_LONG).show()
+            }
+            return
+        }
+
         exoPlayer?.release()
-        exoPlayer = ExoPlayer.Builder(this).build()
+
+        val dataSourceFactory = DefaultHttpDataSource.Factory()
+            .setUserAgent("XCIPTV")
+            .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(15000)
+            .setReadTimeoutMs(30000)
+
+        exoPlayer = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            .build()
         playerView.player = exoPlayer
 
         val mediaItem = MediaItem.fromUri(url)
@@ -255,13 +289,47 @@ class PlayerActivity : AppCompatActivity() {
         exoPlayer?.play()
 
         progressBar.visibility = View.VISIBLE
+
+        var hideProgress: Runnable? = null
+
         exoPlayer?.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_READY) {
-                    runOnUiThread { progressBar.visibility = View.GONE }
+                when (state) {
+                    Player.STATE_READY -> {
+                        hideProgress?.let { handler.removeCallbacks(it) }
+                        runOnUiThread { progressBar.visibility = View.GONE }
+                    }
+                    Player.STATE_ENDED, Player.STATE_IDLE -> {
+                        runOnUiThread { progressBar.visibility = View.GONE }
+                    }
+                }
+            }
+
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                hideProgress?.let { handler.removeCallbacks(it) }
+                runOnUiThread {
+                    progressBar.visibility = View.GONE
+                    val msg = when (error.errorCode) {
+                        androidx.media3.common.PlaybackException.ERROR_CODE_TIMEOUT -> "Tempo limite excedido ao conectar"
+                        androidx.media3.common.PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> "Erro de conexão com o servidor"
+                        androidx.media3.common.PlaybackException.ERROR_CODE_HTTP_UNAUTHORIZED -> "Acesso negado pela fonte"
+                        androidx.media3.common.PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> "Sinal ao vivo perdido"
+                        else -> "Erro ao reproduzir: ${error.localizedMessage ?: "desconhecido"}"
+                    }
+                    Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
                 }
             }
         })
+
+        hideProgress = Runnable {
+            runOnUiThread {
+                if (progressBar.visibility == View.VISIBLE) {
+                    progressBar.visibility = View.GONE
+                    Toast.makeText(this@PlayerActivity, "O stream demorou muito para carregar", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        handler.postDelayed(hideProgress, 20000)
     }
 
     private fun toggleFullscreen() {

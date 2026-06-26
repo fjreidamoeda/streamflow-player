@@ -2,6 +2,31 @@ name: Build StreamFlow Player APK
 
 on:
   workflow_dispatch:
+    inputs:
+      app_name:
+        description: 'Nome do aplicativo'
+        required: true
+        default: 'StreamFlow'
+      package_name:
+        description: 'Nome do pacote (ex: com.streamflow.player)'
+        required: true
+        default: 'com.streamflow.player'
+      panel_url:
+        description: 'URL do painel'
+        required: false
+        default: ''
+      games_url:
+        description: 'URL dos jogos'
+        required: false
+        default: ''
+      intro_video_url:
+        description: 'URL do video de intro'
+        required: false
+        default: ''
+      custom_panel_url:
+        description: 'URL personalizada do painel'
+        required: false
+        default: ''
   push:
     branches: [main]
 
@@ -43,6 +68,43 @@ jobs:
             -alias streamflow -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass streamflow123 -keypass streamflow123 \
             -dname "CN=StreamFlow, OU=Development, O=StreamFlow, L=Sao Paulo, ST=SP, C=BR"
+
+      - name: Patch app package name
+        if: inputs.package_name != ''
+        run: |
+          PACKAGE_DIR=$(echo "${{ inputs.package_name }}" | tr '.' '/')
+          find app/src -type f -name "*.kt" -exec sed -i "s/^package com\.streamflow\.player$/package ${{ inputs.package_name }}/g" {} +
+          find app/src -type f -name "*.xml" -exec sed -i "s/com\.streamflow\.player/${{ inputs.package_name }}/g" {} +
+          mkdir -p "app/src/main/java/$PACKAGE_DIR"
+          rsync -a app/src/main/java/com/streamflow/player/ "app/src/main/java/$PACKAGE_DIR/"
+          rm -rf app/src/main/java/com
+
+      - name: Patch app name and URLs
+        run: |
+          APP_NAME="${{ inputs.app_name }}"
+          PANEL_URL="${{ inputs.panel_url }}"
+          GAMES_URL="${{ inputs.games_url }}"
+          INTRO_VIDEO_URL="${{ inputs.intro_video_url }}"
+          CUSTOM_PANEL_URL="${{ inputs.custom_panel_url }}"
+
+          # Patch app_name in ConfigManager
+          if [ -n "$APP_NAME" ] && [ "$APP_NAME" != "StreamFlow" ]; then
+            find app/src -name "ConfigManager.kt" -exec sed -i "s/\"StreamFlow\"/\"$APP_NAME\"/g" {} +
+          fi
+
+          # Create BuildConfig-style defaults
+          if [ -n "$PANEL_URL" ]; then
+            find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"panel_url\", \"\")|prefs.getString(\"panel_url\", \"$PANEL_URL\")|g" {} +
+          fi
+          if [ -n "$GAMES_URL" ]; then
+            find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"games_url\", \"\")|prefs.getString(\"games_url\", \"$GAMES_URL\")|g" {} +
+          fi
+          if [ -n "$INTRO_VIDEO_URL" ]; then
+            find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"intro_video_url\", \"\")|prefs.getString(\"intro_video_url\", \"$INTRO_VIDEO_URL\")|g" {} +
+          fi
+          if [ -n "$CUSTOM_PANEL_URL" ]; then
+            find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"custom_panel_url\", \"\")|prefs.getString(\"custom_panel_url\", \"$CUSTOM_PANEL_URL\")|g" {} +
+          fi
 
       - name: Build
         run: |
