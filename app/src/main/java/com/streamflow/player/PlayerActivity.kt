@@ -96,6 +96,7 @@ class PlayerActivity : AppCompatActivity() {
         btnMenuSeries.setOnClickListener { switchMenu(MenuType.SERIES) }
 
         playerView.setFullscreenButtonClickListener { toggleFullscreen() }
+        playerView.setOnClickListener { toggleFullscreen() }
         btnBack.setOnClickListener { toggleFullscreen() }
 
         findViewById<ImageButton>(R.id.btnRefresh).setOnClickListener {
