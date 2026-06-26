@@ -94,7 +94,7 @@ class PlayerActivity : AppCompatActivity() {
         btnMenuMovies.setOnClickListener { switchMenu(MenuType.VOD) }
         btnMenuSeries.setOnClickListener { switchMenu(MenuType.SERIES) }
 
-        playerView.setFullscreenButtonClickListener(android.view.View.OnClickListener { toggleFullscreen() })
+        playerView.setFullscreenButtonClickListener { toggleFullscreen() }
         btnBack.setOnClickListener { toggleFullscreen() }
 
         findViewById<ImageButton>(R.id.btnRefresh).setOnClickListener {
