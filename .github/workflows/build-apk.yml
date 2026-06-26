@@ -27,6 +27,14 @@ on:
         description: 'URL personalizada do painel'
         required: false
         default: ''
+      logo_url:
+        description: 'URL da logo para icone do app'
+        required: false
+        default: ''
+      background_url:
+        description: 'URL do background'
+        required: false
+        default: ''
   push:
     branches: [main]
 
@@ -104,6 +112,31 @@ jobs:
           fi
           if [ -n "$CUSTOM_PANEL_URL" ]; then
             find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"custom_panel_url\", \"\")|prefs.getString(\"custom_panel_url\", \"$CUSTOM_PANEL_URL\")|g" {} +
+          fi
+
+      - name: Download and patch logo/background
+        run: |
+          LOGO_URL="${{ inputs.logo_url }}"
+          BG_URL="${{ inputs.background_url }}"
+          if [ -n "$LOGO_URL" ]; then
+            curl -sL "$LOGO_URL" -o /tmp/logo.png
+            if [ -f /tmp/logo.png ] && [ -s /tmp/logo.png ]; then
+              mkdir -p app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-mdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi
+              # Save as launcher icon
+              cp /tmp/logo.png app/src/main/res/mipmap-hdpi/ic_logo.png
+              cp /tmp/logo.png app/src/main/res/mipmap-mdpi/ic_logo.png
+              cp /tmp/logo.png app/src/main/res/mipmap-xhdpi/ic_logo.png
+              cp /tmp/logo.png app/src/main/res/mipmap-xxhdpi/ic_logo.png
+              cp /tmp/logo.png app/src/main/res/mipmap-xxxhdpi/ic_logo.png
+              # Update manifest to use ic_logo as app icon
+              sed -i 's|android:icon="@drawable/ic_tv"|android:icon="@mipmap/ic_logo"|' app/src/main/AndroidManifest.xml
+            fi
+          fi
+          if [ -n "$BG_URL" ]; then
+            curl -sL "$BG_URL" -o app/src/main/res/drawable/bg_main.png
+            # Add background to login/setup layouts by replacing the background color reference
+            sed -i 's|android:background="#1a1a2e"|android:background="@drawable/bg_main"|' app/src/main/res/layout/activity_setup.xml 2>/dev/null || true
+            sed -i 's|android:background="#1a1a2e"|android:background="@drawable/bg_main"|' app/src/main/res/layout/activity_login.xml 2>/dev/null || true
           fi
 
       - name: Build

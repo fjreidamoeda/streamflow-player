@@ -32,6 +32,7 @@ class MainMenuActivity : AppCompatActivity() {
             return
         }
 
+        findViewById<TextView>(R.id.tvAppTitle).text = configManager.appName.ifBlank { "StreamFlow" }
         findViewById<TextView>(R.id.tvWelcome).text = "Bem-vindo, ${configManager.appName}!"
 
         findViewById<CardView>(R.id.cardLive).setOnClickListener {

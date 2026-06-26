@@ -92,7 +92,7 @@ class PlayerActivity : AppCompatActivity() {
         btnMenuMovies.setOnClickListener { switchMenu(MenuType.VOD) }
         btnMenuSeries.setOnClickListener { switchMenu(MenuType.SERIES) }
 
-        playerFrame.setOnClickListener { toggleFullscreen() }
+        playerView.setFullscreenButtonClickListener(android.view.View.OnClickListener { toggleFullscreen() })
         btnBack.setOnClickListener { toggleFullscreen() }
 
         findViewById<ImageButton>(R.id.btnRefresh).setOnClickListener {
@@ -102,7 +102,7 @@ class PlayerActivity : AppCompatActivity() {
             loadCategories()
         }
         findViewById<ImageButton>(R.id.btnLogout).setOnClickListener {
-            finish()
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
 
         val initialMenu = try {
