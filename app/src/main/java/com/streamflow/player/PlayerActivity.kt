@@ -279,7 +279,7 @@ class PlayerActivity : AppCompatActivity() {
             .setReadTimeoutMs(30000)
 
         exoPlayer = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory))
             .build()
         playerView.player = exoPlayer
 
