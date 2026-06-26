@@ -308,12 +308,13 @@ class PlayerActivity : AppCompatActivity() {
                 hideProgress?.let { handler.removeCallbacks(it) }
                 runOnUiThread {
                     progressBar.visibility = View.GONE
+                    val detail = error.localizedMessage ?: error.cause?.message ?: ""
                     val msg = when (error.errorCode) {
                         androidx.media3.common.PlaybackException.ERROR_CODE_TIMEOUT -> "Tempo limite excedido ao conectar"
                         androidx.media3.common.PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> "Erro de conexão com o servidor"
-                        androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> "Erro HTTP da fonte"
+                        androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> "Erro HTTP da fonte ($detail)"
                         androidx.media3.common.PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> "Sinal ao vivo perdido"
-                        else -> "Erro ao reproduzir: ${error.localizedMessage ?: "desconhecido"}"
+                        else -> "Erro ao reproduzir: $detail"
                     }
                     Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
                 }
