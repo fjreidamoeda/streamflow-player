@@ -11,9 +11,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -43,10 +41,12 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var tvNowPlaying: TextView
     private lateinit var tvAppName: TextView
     private lateinit var progressBar: ProgressBar
+    private lateinit var btnBack: ImageButton
     private lateinit var mainLayout: View
     private lateinit var columnCategories: View
     private lateinit var columnContent: View
     private lateinit var columnPlayer: View
+    private lateinit var playerFrame: View
 
     private var categories = listOf<XtreamCategory>()
     private var contentItems = listOf<ContentItem>()
@@ -76,10 +76,12 @@ class PlayerActivity : AppCompatActivity() {
         playerView = findViewById(R.id.playerView)
         tvNowPlaying = findViewById(R.id.tvNowPlaying)
         progressBar = findViewById(R.id.progressBar)
+        btnBack = findViewById(R.id.btnBack)
         mainLayout = findViewById(R.id.mainLayout)
         columnCategories = findViewById(R.id.columnCategories)
         columnContent = findViewById(R.id.columnContent)
         columnPlayer = findViewById(R.id.columnPlayer)
+        playerFrame = findViewById(R.id.playerFrame)
 
         tvAppName.text = configManager.appName.ifBlank { "StreamFlow" }
 
@@ -90,7 +92,8 @@ class PlayerActivity : AppCompatActivity() {
         btnMenuMovies.setOnClickListener { switchMenu(MenuType.VOD) }
         btnMenuSeries.setOnClickListener { switchMenu(MenuType.SERIES) }
 
-        columnPlayer.setOnClickListener { toggleFullscreen() }
+        playerFrame.setOnClickListener { toggleFullscreen() }
+        btnBack.setOnClickListener { toggleFullscreen() }
 
         findViewById<ImageButton>(R.id.btnRefresh).setOnClickListener {
             selectedCategoryId = null
@@ -272,15 +275,7 @@ class PlayerActivity : AppCompatActivity() {
 
         exoPlayer?.release()
 
-        val dataSourceFactory = DefaultHttpDataSource.Factory()
-            .setUserAgent("XCIPTV")
-            .setAllowCrossProtocolRedirects(true)
-            .setConnectTimeoutMs(15000)
-            .setReadTimeoutMs(30000)
-
-        exoPlayer = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory))
-            .build()
+        exoPlayer = ExoPlayer.Builder(this).build()
         playerView.player = exoPlayer
 
         val mediaItem = MediaItem.fromUri(url)
@@ -336,6 +331,7 @@ class PlayerActivity : AppCompatActivity() {
         isFullscreen = !isFullscreen
         columnCategories.visibility = if (isFullscreen) View.GONE else View.VISIBLE
         columnContent.visibility = if (isFullscreen) View.GONE else View.VISIBLE
+        btnBack.visibility = if (isFullscreen) View.VISIBLE else View.GONE
         if (isFullscreen) {
             window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_FULLSCREEN or
