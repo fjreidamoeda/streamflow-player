@@ -98,9 +98,12 @@ sealed class ContentItem {
         override val icon get() = stream.streamIcon
         override val categoryId get() = stream.categoryId
         override fun streamUrl(panel: String, user: String, pass: String, format: String): String {
-            return if (stream.streamUrl.isNotBlank()) applyFormat(stream.streamUrl, format)
-            else if (stream.directSource.isNotBlank()) applyFormat(stream.directSource, format)
-            else applyFormat("$panel/live/$user/$pass/${stream.streamId}.${stream.containerExtension}", format)
+            val raw = if (stream.streamUrl.isNotBlank()) stream.streamUrl
+            else if (stream.directSource.isNotBlank()) stream.directSource
+            else "$panel/live/$user/$pass/${stream.streamId}.${stream.containerExtension}"
+            // Forca m3u8 para canais ao vivo para garantir que o proxy
+            // sirva a playlist com Content-Type correto
+            return applyFormat(raw, "m3u8")
         }
     }
 

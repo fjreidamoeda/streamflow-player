@@ -12,12 +12,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.datasource.HttpDataSource
-import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
-import okhttp3.OkHttpClient
-import java.util.concurrent.TimeUnit
+
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
@@ -285,19 +282,7 @@ class PlayerActivity : AppCompatActivity() {
 
         exoPlayer?.release()
 
-        val okHttpClient = OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .addInterceptor { chain ->
-                val request = chain.request().newBuilder()
-                    .header("User-Agent", "XCIPTV")
-                    .build()
-                chain.proceed(request)
-            }
-            .build()
-        val dataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
-        val mediaSourceFactory = DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
-        exoPlayer = ExoPlayer.Builder(this).setMediaSourceFactory(mediaSourceFactory).build()
+        exoPlayer = ExoPlayer.Builder(this).build()
         playerView.player = exoPlayer
 
         val mediaItem = MediaItem.fromUri(url)
