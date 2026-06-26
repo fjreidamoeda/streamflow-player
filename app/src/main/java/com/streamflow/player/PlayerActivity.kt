@@ -11,7 +11,9 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -275,7 +277,9 @@ class PlayerActivity : AppCompatActivity() {
 
         exoPlayer?.release()
 
-        exoPlayer = ExoPlayer.Builder(this).build()
+        val dataSourceFactory = DefaultHttpDataSource.Factory().setUserAgent("XCIPTV")
+        val mediaSourceFactory = DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
+        exoPlayer = ExoPlayer.Builder(this).setMediaSourceFactory(mediaSourceFactory).build()
         playerView.player = exoPlayer
 
         val mediaItem = MediaItem.fromUri(url)
