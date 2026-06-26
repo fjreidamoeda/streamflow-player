@@ -331,6 +331,9 @@ class PlayerActivity : AppCompatActivity() {
                         androidx.media3.common.PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> "Erro de conexão com o servidor"
                         androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> "Erro HTTP da fonte ($detail)"
                         androidx.media3.common.PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> "Sinal ao vivo perdido"
+                        androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FAILED -> "Falha ao decodificar video"
+                        androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED -> "Formato de video nao suportado"
+                        androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES -> "Video excede capacidade do aparelho (codec/resolucao)"
                         else -> "Erro (código $code): $detail"
                     }
                     Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
