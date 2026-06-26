@@ -317,18 +317,21 @@ class PlayerActivity : AppCompatActivity() {
                 runOnUiThread {
                     progressBar.visibility = View.GONE
                     var detail = error.localizedMessage ?: error.cause?.message ?: ""
+                    val cause = error.cause
                     if (error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS) {
-                        val cause = error.cause
                         if (cause is HttpDataSource.InvalidResponseCodeException) {
                             detail = "HTTP ${cause.responseCode}: ${cause.responseMessage}"
                         }
+                    } else if (cause is HttpDataSource.InvalidResponseCodeException) {
+                        detail = "HTTP ${cause.responseCode}: ${cause.responseMessage}"
                     }
-                    val msg = when (error.errorCode) {
+                    val code = error.errorCode
+                    val msg = when (code) {
                         androidx.media3.common.PlaybackException.ERROR_CODE_TIMEOUT -> "Tempo limite excedido ao conectar"
                         androidx.media3.common.PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> "Erro de conexão com o servidor"
                         androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> "Erro HTTP da fonte ($detail)"
                         androidx.media3.common.PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> "Sinal ao vivo perdido"
-                        else -> "Erro ao reproduzir: $detail"
+                        else -> "Erro (código $code): $detail"
                     }
                     Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
                 }

@@ -14,6 +14,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var rbHls: RadioButton
     private lateinit var etUsername: EditText
     private lateinit var etPassword: EditText
+    private lateinit var etPanelUrl: EditText
     private lateinit var btnSave: Button
     private lateinit var btnLogout: Button
     private lateinit var tvStatus: TextView
@@ -30,6 +31,7 @@ class SettingsActivity : AppCompatActivity() {
         rbHls = findViewById(R.id.rbFormatHls)
         etUsername = findViewById(R.id.etUsername)
         etPassword = findViewById(R.id.etPassword)
+        etPanelUrl = findViewById(R.id.etPanelUrl)
         btnSave = findViewById(R.id.btnSave)
         btnLogout = findViewById(R.id.btnLogout)
         tvStatus = findViewById(R.id.tvStatus)
@@ -42,15 +44,17 @@ class SettingsActivity : AppCompatActivity() {
 
         etUsername.setText(configManager.username)
         etPassword.setText(configManager.password)
+        etPanelUrl.setText(configManager.panelUrl)
 
         btnSave.setOnClickListener {
             val playerType = if (rbExternal.isChecked) "external" else "internal"
             val streamFormat = if (rbHls.isChecked) "m3u8" else "ts"
             val username = etUsername.text.toString().trim()
             val password = etPassword.text.toString().trim()
+            val panelUrl = etPanelUrl.text.toString().trim()
 
-            if (username.isBlank() || password.isBlank()) {
-                tvStatus.text = "Usuario e senha obrigatorios"
+            if (username.isBlank() || password.isBlank() || panelUrl.isBlank()) {
+                tvStatus.text = "Preencha todos os campos obrigatorios"
                 tvStatus.setTextColor(0xffff6b6b.toInt())
                 tvStatus.visibility = TextView.VISIBLE
                 return@setOnClickListener
@@ -60,6 +64,7 @@ class SettingsActivity : AppCompatActivity() {
             configManager.streamFormat = streamFormat
             configManager.username = username
             configManager.password = password
+            configManager.panelUrl = panelUrl
 
             tvStatus.text = "Configuracoes salvas!"
             tvStatus.setTextColor(0xff4caf50.toInt())
