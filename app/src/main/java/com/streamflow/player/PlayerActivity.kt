@@ -282,7 +282,9 @@ class PlayerActivity : AppCompatActivity() {
 
         exoPlayer?.release()
 
-        val dataSourceFactory = DefaultHttpDataSource.Factory().setUserAgent("XCIPTV")
+        val dataSourceFactory = DefaultHttpDataSource.Factory()
+            .setUserAgent("XCIPTV")
+            .setAllowCrossProtocolRedirects(true)
         val mediaSourceFactory = DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
         exoPlayer = ExoPlayer.Builder(this).setMediaSourceFactory(mediaSourceFactory).build()
         playerView.player = exoPlayer
