@@ -86,6 +86,9 @@ jobs:
           mkdir -p "app/src/main/java/$PACKAGE_DIR"
           rsync -a app/src/main/java/com/streamflow/player/ "app/src/main/java/$PACKAGE_DIR/"
           rm -rf app/src/main/java/com
+          # Patch applicationId and namespace in build.gradle.kts
+          sed -i "s/applicationId = \"com\.streamflow\.player\"/applicationId = \"${{ inputs.package_name }}\"/" app/build.gradle.kts
+          sed -i "s/namespace = \"com\.streamflow\.player\"/namespace = \"${{ inputs.package_name }}\"/" app/build.gradle.kts
 
       - name: Patch app name and URLs
         run: |
@@ -95,9 +98,10 @@ jobs:
           INTRO_VIDEO_URL="${{ inputs.intro_video_url }}"
           CUSTOM_PANEL_URL="${{ inputs.custom_panel_url }}"
 
-          # Patch app_name in ConfigManager
+          # Patch app_name in ConfigManager and strings.xml
           if [ -n "$APP_NAME" ] && [ "$APP_NAME" != "StreamFlow" ]; then
             find app/src -name "ConfigManager.kt" -exec sed -i "s/\"StreamFlow\"/\"$APP_NAME\"/g" {} +
+            sed -i "s|<string name=\"app_name\">.*</string>|<string name=\"app_name\">$APP_NAME</string>|" app/src/main/res/values/strings.xml
           fi
 
           # Create BuildConfig-style defaults
@@ -122,25 +126,32 @@ jobs:
             curl -sL "$LOGO_URL" -o /tmp/logo.png
             if [ -f /tmp/logo.png ] && [ -s /tmp/logo.png ]; then
               mkdir -p app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-mdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi
-              # Save as launcher icon
-              cp /tmp/logo.png app/src/main/res/mipmap-hdpi/ic_logo.png
-              cp /tmp/logo.png app/src/main/res/mipmap-mdpi/ic_logo.png
-              cp /tmp/logo.png app/src/main/res/mipmap-xhdpi/ic_logo.png
-              cp /tmp/logo.png app/src/main/res/mipmap-xxhdpi/ic_logo.png
-              cp /tmp/logo.png app/src/main/res/mipmap-xxxhdpi/ic_logo.png
-              # Update manifest to use ic_logo as app icon
-              sed -i 's|android:icon="@drawable/ic_tv"|android:icon="@mipmap/ic_logo"|' app/src/main/AndroidManifest.xml
+              cp /tmp/logo.png app/src/main/res/mipmap-hdpi/ic_launcher.png
+              cp /tmp/logo.png app/src/main/res/mipmap-mdpi/ic_launcher.png
+              cp /tmp/logo.png app/src/main/res/mipmap-xhdpi/ic_launcher.png
+              cp /tmp/logo.png app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+              cp /tmp/logo.png app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+              # Create ic_launcher.xml adaptive icon
+              mkdir -p app/src/main/res/mipmap-anydpi-v26
+              cat > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml << 'EOF'
+            <?xml version="1.0" encoding="utf-8"?>
+            <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+                <background android:drawable="@mipmap/ic_launcher"/>
+                <foreground android:drawable="@mipmap/ic_launcher"/>
+            </adaptive-icon>
+            EOF
+              sed -i 's|android:icon="@drawable/ic_tv"|android:icon="@mipmap/ic_launcher"|' app/src/main/AndroidManifest.xml
             fi
           fi
           if [ -n "$BG_URL" ]; then
             curl -sL "$BG_URL" -o app/src/main/res/drawable/bg_main.png
-            # Add background to all layouts
-            for layout in app/src/main/res/layout/activity_*.xml; do
-              sed -i 's|android:background="#1a1a2e"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
-              sed -i 's|android:background="#0f0f23"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
-              sed -i 's|android:background="#151530"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
-              sed -i 's|android:background="#12122a"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
-            done
+            if [ -f app/src/main/res/drawable/bg_main.png ] && [ -s app/src/main/res/drawable/bg_main.png ]; then
+              for layout in app/src/main/res/layout/*.xml; do
+                # Remove any existing android:background and add our drawable
+                sed -i 's|android:background="@drawable/[^"]*"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
+                sed -i 's|android:background="#[A-Fa-f0-9]*"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
+              done
+            fi
           fi
 
       - name: Build
