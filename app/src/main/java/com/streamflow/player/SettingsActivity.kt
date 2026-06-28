@@ -15,6 +15,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var etUsername: EditText
     private lateinit var etPassword: EditText
     private lateinit var etPanelUrl: EditText
+    private lateinit var etToken: EditText
     private lateinit var btnSave: Button
     private lateinit var btnLogout: Button
     private lateinit var tvStatus: TextView
@@ -32,6 +33,7 @@ class SettingsActivity : AppCompatActivity() {
         etUsername = findViewById(R.id.etUsername)
         etPassword = findViewById(R.id.etPassword)
         etPanelUrl = findViewById(R.id.etPanelUrl)
+        etToken = findViewById(R.id.etToken)
         btnSave = findViewById(R.id.btnSave)
         btnLogout = findViewById(R.id.btnLogout)
         tvStatus = findViewById(R.id.tvStatus)
@@ -45,6 +47,7 @@ class SettingsActivity : AppCompatActivity() {
         etUsername.setText(configManager.username)
         etPassword.setText(configManager.password)
         etPanelUrl.setText(configManager.panelUrl)
+        etToken.setText(configManager.token)
 
         btnSave.setOnClickListener {
             val playerType = if (rbExternal.isChecked) "external" else "internal"
@@ -52,6 +55,7 @@ class SettingsActivity : AppCompatActivity() {
             val username = etUsername.text.toString().trim()
             val password = etPassword.text.toString().trim()
             val panelUrl = etPanelUrl.text.toString().trim()
+            val token = etToken.text.toString().trim()
 
             if (username.isBlank() || password.isBlank() || panelUrl.isBlank()) {
                 tvStatus.text = "Preencha todos os campos obrigatorios"
@@ -65,6 +69,7 @@ class SettingsActivity : AppCompatActivity() {
             configManager.username = username
             configManager.password = password
             configManager.panelUrl = panelUrl
+            configManager.token = token
 
             tvStatus.text = "Configuracoes salvas!"
             tvStatus.setTextColor(0xff4caf50.toInt())

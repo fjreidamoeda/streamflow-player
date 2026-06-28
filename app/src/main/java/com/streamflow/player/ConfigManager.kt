@@ -48,6 +48,10 @@ class ConfigManager(context: Context) {
         get() = prefs.getString("stream_format", "") ?: ""
         set(value) = prefs.edit().putString("stream_format", value).apply()
 
+    var token: String
+        get() = prefs.getString("setup_token", "") ?: ""
+        set(value) = prefs.edit().putString("setup_token", value).apply()
+
     var gamesUrl: String
         get() = prefs.getString("games_url", "") ?: ""
         set(value) = prefs.edit().putString("games_url", value).apply()
