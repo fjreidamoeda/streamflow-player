@@ -14,7 +14,6 @@
 
         <!-- Top menu bar -->
         <LinearLayout
-            android:id="@+id/topMenuBar"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:orientation="horizontal"
@@ -169,26 +168,10 @@
                     android:paddingHorizontal="12dp"
                     android:background="#1a1a38" />
 
-                <EditText
-                    android:id="@+id/etSearch"
-                    android:layout_width="match_parent"
-                    android:layout_height="36dp"
-                    android:hint="Pesquisar..."
-                    android:textColor="#ffffff"
-                    android:textColorHint="#888888"
-                    android:background="#1f1f40"
-                    android:paddingHorizontal="12dp"
-                    android:gravity="center_vertical"
-                    android:inputType="text"
-                    android:imeOptions="action_search"
-                    android:singleLine="true"
-                    android:visibility="gone" />
-
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvContent"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_height="match_parent"
                     android:clipToPadding="false"
                     android:padding="4dp" />
 
