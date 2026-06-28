@@ -9,9 +9,14 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 
 class CategoryAdapter(
-    private val selectedCategoryId: String?,
+    private var selectedCategoryId: String?,
     private val onClick: (XtreamCategory) -> Unit
 ) : ListAdapter<XtreamCategory, CategoryAdapter.ViewHolder>(DiffCallback()) {
+
+    fun updateSelectedId(id: String?) {
+        selectedCategoryId = id
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
