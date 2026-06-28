@@ -15,8 +15,10 @@ class MainActivity : AppCompatActivity() {
         when {
             configManager.isConfigured ->
                 startActivity(Intent(this, MainMenuActivity::class.java))
-            configManager.panelUrl.isNotBlank() ->
+            configManager.token.isNotBlank() ->
                 startActivity(Intent(this, LoginActivity::class.java))
+            configManager.panelUrl.isNotBlank() ->
+                startActivity(Intent(this, SetupActivity::class.java))
             else ->
                 startActivity(Intent(this, SetupActivity::class.java))
         }

@@ -36,7 +36,7 @@ class LoginActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
 
-        if (configManager.panelUrl.isBlank()) {
+        if (configManager.token.isBlank()) {
             startActivity(Intent(this, SetupActivity::class.java))
             finish()
             return
