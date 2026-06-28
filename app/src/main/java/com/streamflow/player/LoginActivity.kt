@@ -1,7 +1,6 @@
 package com.streamflow.player
 
 import android.content.Intent
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -49,7 +48,7 @@ class LoginActivity : AppCompatActivity() {
         if (configManager.backgroundUrl.isNotBlank()) {
             bgTarget = object : com.squareup.picasso.Target {
                 override fun onBitmapLoaded(bitmap: android.graphics.Bitmap, from: Picasso.LoadedFrom) {
-                    window.decorView.rootView.background = android.graphics.drawable.BitmapDrawable(resources, bitmap)
+                    window.decorView.rootView.background = android.graphics.drawable.BitmapDrawable(this@LoginActivity.resources, bitmap)
                 }
                 override fun onBitmapFailed(e: Exception?, errorDrawable: android.graphics.drawable.Drawable?) {}
                 override fun onPrepareLoad(placeHolderDrawable: android.graphics.drawable.Drawable?) {}
