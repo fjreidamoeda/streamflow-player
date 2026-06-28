@@ -1,6 +1,5 @@
 package com.streamflow.player
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
@@ -46,8 +45,10 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var rvContent: RecyclerView
     private lateinit var playerView: PlayerView
     private lateinit var tvNowPlaying: TextView
+    private lateinit var topMenuBar: View
     private lateinit var tvAppName: TextView
     private lateinit var progressBar: ProgressBar
+    private lateinit var etSearch: EditText
     private lateinit var btnBack: ImageButton
     private lateinit var mainLayout: View
     private lateinit var columnCategories: View
@@ -74,6 +75,8 @@ class PlayerActivity : AppCompatActivity() {
             return
         }
 
+        topMenuBar = findViewById(R.id.topMenuBar)
+        etSearch = findViewById(R.id.etSearch)
         tvAppName = findViewById(R.id.tvAppName)
         btnMenuLive = findViewById(R.id.btnMenuLive)
         btnMenuMovies = findViewById(R.id.btnMenuMovies)
@@ -120,6 +123,18 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
 
+        etSearch.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val query = s?.toString()?.lowercase() ?: ""
+                contentAdapter?.submitList(
+                    if (query.isEmpty()) contentItems
+                    else contentItems.filter { it.name.lowercase().contains(query) }
+                )
+            }
+        })
+
         val initialMenu = try {
             MenuType.valueOf(intent.getStringExtra("menu_type") ?: "LIVE")
         } catch (e: Exception) { MenuType.LIVE }
@@ -154,6 +169,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun loadCategories() {
+        selectedCategoryId = null
         categoryAdapter = null
         rvCategories.adapter = null
         contentAdapter = null
@@ -169,13 +185,12 @@ class PlayerActivity : AppCompatActivity() {
                 progressBar.visibility = View.GONE
                 result.onSuccess { cats ->
                     categories = cats
+                    selectedCategoryId = categories.firstOrNull()?.categoryId
                     categoryAdapter = CategoryAdapter(selectedCategoryId) { cat ->
                         selectedCategoryId = cat.categoryId
                         selectedSeries = null
                         showingEpisodes = false
-                        categoryAdapter = CategoryAdapter(selectedCategoryId) { loadContent(cat.categoryId) }
-                        rvCategories.adapter = categoryAdapter
-                        categoryAdapter?.submitList(categories)
+                        categoryAdapter?.updateSelectedId(cat.categoryId)
                         loadContent(cat.categoryId)
                     }
                     rvCategories.adapter = categoryAdapter
@@ -354,20 +369,7 @@ class PlayerActivity : AppCompatActivity() {
                     if (code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES ||
                         code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ||
                         code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FAILED) {
-                        AlertDialog.Builder(this@PlayerActivity)
-                            .setTitle("Erro de reprodução")
-                            .setMessage("$msg\n\nDeseja tentar abrir em um player externo?")
-                            .setPositiveButton("Abrir externo") { _, _ ->
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    setDataAndType(Uri.parse(url), "video/*")
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                }
-                                try { startActivity(intent) } catch (_: Exception) {
-                                    Toast.makeText(this@PlayerActivity, "Nenhum player externo encontrado", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                            .setNegativeButton("Fechar", null)
-                            .show()
+                        Toast.makeText(this@PlayerActivity, "Sem sinal", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
                     }
@@ -391,7 +393,10 @@ class PlayerActivity : AppCompatActivity() {
         isFullscreen = !isFullscreen
         columnCategories.visibility = if (isFullscreen) View.GONE else View.VISIBLE
         columnContent.visibility = if (isFullscreen) View.GONE else View.VISIBLE
+        topMenuBar.visibility = if (isFullscreen) View.GONE else View.VISIBLE
+        tvNowPlaying.visibility = if (isFullscreen) View.GONE else View.VISIBLE
         btnBack.visibility = if (isFullscreen) View.VISIBLE else View.GONE
+        playerView.useController = !isFullscreen
         if (isFullscreen) {
             window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_FULLSCREEN or
