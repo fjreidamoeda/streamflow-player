@@ -178,6 +178,7 @@
                     android:textColorHint="#888888"
                     android:background="#1f1f40"
                     android:inputType="text"
+                    android:imeOptions="action_search"
                     android:visibility="gone" />
 
                 <androidx.recyclerview.widget.RecyclerView
