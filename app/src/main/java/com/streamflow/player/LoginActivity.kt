@@ -41,6 +41,8 @@ class LoginActivity : AppCompatActivity() {
 
         val ivLogo = findViewById<ImageView>(R.id.ivLogo)
         val tvTitle = findViewById<TextView>(R.id.tvTitle)
+        val scrollView = findViewById<android.widget.ScrollView>(R.id.loginScrollView)
+        scrollView.setBackgroundColor(0xff1a1a2e.toInt())
 
         if (configManager.logoUrl.isNotBlank()) {
             Picasso.get().load(configManager.logoUrl).into(ivLogo)
@@ -48,7 +50,7 @@ class LoginActivity : AppCompatActivity() {
         if (configManager.backgroundUrl.isNotBlank()) {
             val target = object : com.squareup.picasso.Target {
                 override fun onBitmapLoaded(bitmap: android.graphics.Bitmap, from: Picasso.LoadedFrom) {
-                    window.decorView.rootView.background = android.graphics.drawable.BitmapDrawable(this@LoginActivity.resources, bitmap)
+                    scrollView.background = android.graphics.drawable.BitmapDrawable(this@LoginActivity.resources, bitmap)
                 }
                 override fun onBitmapFailed(e: Exception?, errorDrawable: android.graphics.drawable.Drawable?) {}
                 override fun onPrepareLoad(placeHolderDrawable: android.graphics.drawable.Drawable?) {}

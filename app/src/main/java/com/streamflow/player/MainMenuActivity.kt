@@ -5,10 +5,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import com.squareup.picasso.Picasso
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,6 +36,9 @@ class MainMenuActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.tvAppTitle).text = configManager.appName.ifBlank { "StreamFlow" }
         findViewById<TextView>(R.id.tvWelcome).text = "Bem-vindo, ${configManager.appName}!"
+        if (configManager.logoUrl.isNotBlank()) {
+            Picasso.get().load(configManager.logoUrl).into(findViewById<ImageView>(R.id.ivMenuLogo))
+        }
 
         findViewById<CardView>(R.id.cardLive).setOnClickListener {
             startPlayer(MenuType.LIVE)

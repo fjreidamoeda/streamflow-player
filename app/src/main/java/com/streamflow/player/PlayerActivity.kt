@@ -18,8 +18,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 
+import android.widget.ImageView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.squareup.picasso.Picasso
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -89,6 +91,9 @@ class PlayerActivity : AppCompatActivity() {
         playerFrame = findViewById(R.id.playerFrame)
 
         tvAppName.text = configManager.appName.ifBlank { "StreamFlow" }
+        if (configManager.logoUrl.isNotBlank()) {
+            Picasso.get().load(configManager.logoUrl).into(findViewById<ImageView>(R.id.ivPlayerLogo))
+        }
 
         rvCategories.layoutManager = LinearLayoutManager(this)
         rvContent.layoutManager = LinearLayoutManager(this)
@@ -343,7 +348,18 @@ class PlayerActivity : AppCompatActivity() {
                         androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES -> "Video excede capacidade do aparelho (codec/resolucao)"
                         else -> "Erro (código $code): $detail"
                     }
-                    Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
+                    if (code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES ||
+                        code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ||
+                        code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FAILED) {
+                        Toast.makeText(this@PlayerActivity, "$msg. Tentando player externo...", Toast.LENGTH_LONG).show()
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(Uri.parse(url), "video/*")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        try { startActivity(intent) } catch (_: Exception) {}
+                    } else {
+                        Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         })
