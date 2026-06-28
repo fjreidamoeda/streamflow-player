@@ -169,6 +169,21 @@
                     android:paddingHorizontal="12dp"
                     android:background="#1a1a38" />
 
+                <EditText
+                    android:id="@+id/etSearch"
+                    android:layout_width="match_parent"
+                    android:layout_height="36dp"
+                    android:hint="Pesquisar..."
+                    android:textColor="#ffffff"
+                    android:textColorHint="#888888"
+                    android:background="#1f1f40"
+                    android:paddingHorizontal="12dp"
+                    android:gravity="center_vertical"
+                    android:inputType="text"
+                    android:imeOptions="action_search"
+                    android:singleLine="true"
+                    android:visibility="gone" />
+
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvContent"
                     android:layout_width="match_parent"
