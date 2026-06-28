@@ -46,14 +46,15 @@ class LoginActivity : AppCompatActivity() {
             Picasso.get().load(configManager.logoUrl).into(ivLogo)
         }
         if (configManager.backgroundUrl.isNotBlank()) {
-            bgTarget = object : com.squareup.picasso.Target {
+            val target = object : com.squareup.picasso.Target {
                 override fun onBitmapLoaded(bitmap: android.graphics.Bitmap, from: Picasso.LoadedFrom) {
                     window.decorView.rootView.background = android.graphics.drawable.BitmapDrawable(this@LoginActivity.resources, bitmap)
                 }
                 override fun onBitmapFailed(e: Exception?, errorDrawable: android.graphics.drawable.Drawable?) {}
                 override fun onPrepareLoad(placeHolderDrawable: android.graphics.drawable.Drawable?) {}
             }
-            Picasso.get().load(configManager.backgroundUrl).into(bgTarget)
+            bgTarget = target
+            Picasso.get().load(configManager.backgroundUrl).into(target)
         }
         if (configManager.appName.isNotBlank()) {
             tvTitle.text = configManager.appName
