@@ -52,5 +52,9 @@
             android:exported="false"
             android:screenOrientation="landscape" />
 
+        <activity
+            android:name=".WebViewActivity"
+            android:exported="false" />
+
     </application>
 </manifest>

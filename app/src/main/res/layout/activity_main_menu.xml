@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mainMenuScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#1a1a2e"
@@ -46,7 +47,7 @@
             android:columnCount="3"
             android:rowCount="2"
             android:alignmentMode="alignMargins"
-            android:columnOrderPreserved="false"
+            android:columnOrderPreserved="true"
             android:layout_marginBottom="8dp">
 
             <androidx.cardview.widget.CardView

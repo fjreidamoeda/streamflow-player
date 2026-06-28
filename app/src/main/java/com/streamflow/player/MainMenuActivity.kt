@@ -2,10 +2,10 @@ package com.streamflow.player
 
 import android.app.AlertDialog
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +20,7 @@ class MainMenuActivity : AppCompatActivity() {
 
     private lateinit var configManager: ConfigManager
     private lateinit var networkUtils: NetworkUtils
+    private var bgTarget: com.squareup.picasso.Target? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,9 +36,21 @@ class MainMenuActivity : AppCompatActivity() {
         }
 
         findViewById<TextView>(R.id.tvAppTitle).text = configManager.appName.ifBlank { "StreamFlow" }
-        findViewById<TextView>(R.id.tvWelcome).text = "Bem-vindo, ${configManager.appName}!"
+        findViewById<TextView>(R.id.tvWelcome).text = "Bem-vindo, ${configManager.username}!"
         if (configManager.logoUrl.isNotBlank()) {
             Picasso.get().load(configManager.logoUrl).into(findViewById<ImageView>(R.id.ivMenuLogo))
+        }
+        if (configManager.backgroundUrl.isNotBlank()) {
+            val scroll = findViewById<ScrollView>(R.id.mainMenuScroll)
+            val target = object : com.squareup.picasso.Target {
+                override fun onBitmapLoaded(bitmap: android.graphics.Bitmap, from: Picasso.LoadedFrom) {
+                    scroll.background = android.graphics.drawable.BitmapDrawable(resources, bitmap)
+                }
+                override fun onBitmapFailed(e: Exception?, errorDrawable: android.graphics.drawable.Drawable?) {}
+                override fun onPrepareLoad(placeHolderDrawable: android.graphics.drawable.Drawable?) {}
+            }
+            bgTarget = target
+            Picasso.get().load(configManager.backgroundUrl).into(target)
         }
 
         findViewById<CardView>(R.id.cardLive).setOnClickListener {
@@ -60,7 +73,10 @@ class MainMenuActivity : AppCompatActivity() {
             val gamesUrl = configManager.gamesUrl
             if (gamesUrl.isNotBlank()) {
                 try {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(gamesUrl))
+                    val intent = Intent(this, WebViewActivity::class.java).apply {
+                        putExtra("url", gamesUrl)
+                        putExtra("title", "Jogos")
+                    }
                     startActivity(intent)
                 } catch (e: Exception) {
                     Toast.makeText(this, "Erro ao abrir jogos", Toast.LENGTH_SHORT).show()
