@@ -82,6 +82,8 @@ class SetupActivity : AppCompatActivity() {
                     configManager.introVideoUrl = config.introVideoUrl
                     configManager.customPanelUrl = config.customPanelUrl
                     configManager.appName = config.appName
+                    configManager.logoUrl = config.logoUrl
+                    configManager.backgroundUrl = config.backgroundUrl
 
                     startActivity(Intent(this@SetupActivity, LoginActivity::class.java))
                     finish()
@@ -110,6 +112,8 @@ class SetupActivity : AppCompatActivity() {
                     return ConfigResult(
                         dns = json.optString("dns", ""),
                         appName = json.optString("app_name", ""),
+                        logoUrl = json.optString("logo_url", ""),
+                        backgroundUrl = json.optString("background_url", ""),
                         gamesUrl = json.optString("games_url", ""),
                         introVideoUrl = json.optString("intro_video_url", ""),
                         customPanelUrl = json.optString("custom_panel_url", "")
@@ -125,8 +129,10 @@ class SetupActivity : AppCompatActivity() {
     private data class ConfigResult(
         val dns: String,
         val appName: String,
-        val gamesUrl: String,
-        val introVideoUrl: String,
-        val customPanelUrl: String
+        val logoUrl: String = "",
+        val backgroundUrl: String = "",
+        val gamesUrl: String = "",
+        val introVideoUrl: String = "",
+        val customPanelUrl: String = ""
     )
 }

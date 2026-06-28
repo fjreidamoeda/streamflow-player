@@ -1,13 +1,16 @@
 package com.streamflow.player
 
 import android.content.Intent
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.squareup.picasso.Picasso
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,6 +25,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnLogin: Button
     private lateinit var progressBar: ProgressBar
     private lateinit var tvError: TextView
+    private var bgTarget: com.squareup.picasso.Target? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +39,26 @@ class LoginActivity : AppCompatActivity() {
         btnLogin = findViewById(R.id.btnLogin)
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
+
+        val ivLogo = findViewById<ImageView>(R.id.ivLogo)
+        val tvTitle = findViewById<TextView>(R.id.tvTitle)
+
+        if (configManager.logoUrl.isNotBlank()) {
+            Picasso.get().load(configManager.logoUrl).into(ivLogo)
+        }
+        if (configManager.backgroundUrl.isNotBlank()) {
+            bgTarget = object : com.squareup.picasso.Target {
+                override fun onBitmapLoaded(bitmap: android.graphics.Bitmap, from: Picasso.LoadedFrom) {
+                    window.decorView.rootView.background = android.graphics.drawable.BitmapDrawable(resources, bitmap)
+                }
+                override fun onBitmapFailed(e: Exception?, errorDrawable: android.graphics.drawable.Drawable?) {}
+                override fun onPrepareLoad(placeHolderDrawable: android.graphics.drawable.Drawable?) {}
+            }
+            Picasso.get().load(configManager.backgroundUrl).into(bgTarget)
+        }
+        if (configManager.appName.isNotBlank()) {
+            tvTitle.text = configManager.appName
+        }
 
         if (configManager.token.isBlank()) {
             startActivity(Intent(this, SetupActivity::class.java))

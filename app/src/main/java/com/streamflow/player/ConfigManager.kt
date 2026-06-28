@@ -64,6 +64,14 @@ class ConfigManager(context: Context) {
         get() = prefs.getString("custom_panel_url", "") ?: ""
         set(value) = prefs.edit().putString("custom_panel_url", value.trimEnd('/')).apply()
 
+    var logoUrl: String
+        get() = prefs.getString("logo_url", "") ?: ""
+        set(value) = prefs.edit().putString("logo_url", value).apply()
+
+    var backgroundUrl: String
+        get() = prefs.getString("background_url", "") ?: ""
+        set(value) = prefs.edit().putString("background_url", value).apply()
+
     val isConfigured: Boolean
         get() = panelUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank()
 
