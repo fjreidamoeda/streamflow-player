@@ -1,5 +1,6 @@
 package com.streamflow.player
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
@@ -351,12 +352,20 @@ class PlayerActivity : AppCompatActivity() {
                     if (code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES ||
                         code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ||
                         code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FAILED) {
-                        Toast.makeText(this@PlayerActivity, "$msg. Tentando player externo...", Toast.LENGTH_LONG).show()
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            setDataAndType(Uri.parse(url), "video/*")
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                        try { startActivity(intent) } catch (_: Exception) {}
+                        AlertDialog.Builder(this@PlayerActivity)
+                            .setTitle("Erro de reprodução")
+                            .setMessage("$msg\n\nDeseja tentar abrir em um player externo?")
+                            .setPositiveButton("Abrir externo") { _, _ ->
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(Uri.parse(url), "video/*")
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                try { startActivity(intent) } catch (_: Exception) {
+                                    Toast.makeText(this@PlayerActivity, "Nenhum player externo encontrado", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                            .setNegativeButton("Fechar", null)
+                            .show()
                     } else {
                         Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
                     }

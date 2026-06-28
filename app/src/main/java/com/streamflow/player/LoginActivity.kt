@@ -101,7 +101,6 @@ class LoginActivity : AppCompatActivity() {
                     result.onSuccess { userInfo ->
                         configManager.username = username
                         configManager.password = password
-                        configManager.appName = userInfo.username
 
                         Toast.makeText(
                             this@LoginActivity,
