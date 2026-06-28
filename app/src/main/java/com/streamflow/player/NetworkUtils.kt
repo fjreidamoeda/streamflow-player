@@ -258,6 +258,17 @@ class NetworkUtils {
             }
         }
 
+    suspend fun resolveDirectUrl(proxyUrl: String): String = withContext(Dispatchers.IO) {
+        try {
+            val sep = if (proxyUrl.contains("?")) "&" else "?"
+            val url = "$proxyUrl${sep}return_url=1"
+            val request = Request.Builder().url(url).build()
+            val response = client.newCall(request).execute()
+            val body = response.body?.string()?.trim() ?: ""
+            if (body.isNotBlank() && body.startsWith("http")) body else proxyUrl
+        } catch (_: Exception) { proxyUrl }
+    }
+
     suspend fun getApkMessages(panelUrl: String, username: String): Result<List<ApkMessage>> =
         withContext(Dispatchers.IO) {
             try {

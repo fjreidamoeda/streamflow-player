@@ -14,7 +14,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
@@ -274,45 +273,48 @@ class PlayerActivity : AppCompatActivity() {
 
         tvNowPlaying.text = "▶ $title"
 
-        if (configManager.playerType == "external") {
-            exoPlayer?.release()
-            playerView.player = null
-            try {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(Uri.parse(url), "video/*")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(intent)
-            } catch (e: Exception) {
-                Toast.makeText(this, "Nenhum player externo encontrado", Toast.LENGTH_LONG).show()
+        val playUrl = url
+        CoroutineScope(Dispatchers.Main).launch {
+            val resolvedUrl = withContext(Dispatchers.IO) {
+                networkUtils.resolveDirectUrl(playUrl)
             }
-            return
-        }
 
-        exoPlayer?.release()
+            if (configManager.playerType == "external") {
+                exoPlayer?.release()
+                playerView.player = null
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(Uri.parse(resolvedUrl), "video/*")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(this@PlayerActivity, "Nenhum player externo encontrado", Toast.LENGTH_LONG).show()
+                }
+                return@launch
+            }
 
-        val renderersFactory = DefaultRenderersFactory(this)
-            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
-        val dataSourceFactory = DefaultHttpDataSource.Factory()
-            .setAllowCrossProtocolRedirects(true)
-            .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-        val mediaSourceFactory = DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
-        exoPlayer = ExoPlayer.Builder(this)
-            .setRenderersFactory(renderersFactory)
-            .setMediaSourceFactory(mediaSourceFactory)
-            .build()
-        playerView.player = exoPlayer
+            exoPlayer?.release()
 
-        val mediaItem = MediaItem.fromUri(url)
-        exoPlayer?.setMediaItem(mediaItem)
-        exoPlayer?.prepare()
-        exoPlayer?.play()
+            val dataSourceFactory = DefaultHttpDataSource.Factory()
+                .setAllowCrossProtocolRedirects(true)
+                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+            val mediaSourceFactory = DefaultMediaSourceFactory(this@PlayerActivity).setDataSourceFactory(dataSourceFactory)
+            exoPlayer = ExoPlayer.Builder(this@PlayerActivity)
+                .setMediaSourceFactory(mediaSourceFactory)
+                .build()
+            playerView.player = exoPlayer
 
-        progressBar.visibility = View.VISIBLE
+            val mediaItem = MediaItem.fromUri(resolvedUrl)
+            exoPlayer?.setMediaItem(mediaItem)
+            exoPlayer?.prepare()
+            exoPlayer?.play()
 
-        var hideProgress: Runnable? = null
+            progressBar.visibility = View.VISIBLE
 
-        exoPlayer?.addListener(object : Player.Listener {
+            var hideProgress: Runnable? = null
+
+            exoPlayer?.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 when (state) {
                     Player.STATE_READY -> {
@@ -382,6 +384,7 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
         handler.postDelayed(hideProgress, 20000)
+        }
     }
 
     private fun toggleFullscreen() {
