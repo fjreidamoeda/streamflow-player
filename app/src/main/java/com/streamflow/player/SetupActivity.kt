@@ -43,6 +43,11 @@ class SetupActivity : AppCompatActivity() {
             etPanelUrl.setText(configManager.panelUrl)
         }
 
+        // Auto-connect if both token and panel URL are pre-configured
+        if (configManager.token.isNotBlank() && configManager.panelUrl.isNotBlank()) {
+            btnConnect.post { btnConnect.performClick() }
+        }
+
         btnConnect.setOnClickListener {
             val token = etToken.text.toString().trim()
             var panelUrl = etPanelUrl.text.toString().trim()

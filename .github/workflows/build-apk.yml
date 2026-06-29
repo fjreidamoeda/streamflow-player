@@ -35,6 +35,10 @@ on:
         description: 'URL do background'
         required: false
         default: ''
+      setup_token:
+        description: 'Token de configuracao (opcional)'
+        required: false
+        default: ''
   push:
     branches: [main]
 
@@ -116,6 +120,10 @@ jobs:
           fi
           if [ -n "$CUSTOM_PANEL_URL" ]; then
             find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"custom_panel_url\", \"\")|prefs.getString(\"custom_panel_url\", \"$CUSTOM_PANEL_URL\")|g" {} +
+          fi
+          SETUP_TOKEN="${{ inputs.setup_token }}"
+          if [ -n "$SETUP_TOKEN" ]; then
+            find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"setup_token\", \"\")|prefs.getString(\"setup_token\", \"$SETUP_TOKEN\")|g" {} +
           fi
 
       - name: Download and patch logo/background
