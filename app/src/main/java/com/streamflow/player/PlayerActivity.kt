@@ -132,8 +132,7 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         btnHome.setOnClickListener {
-            startActivity(Intent(this, MainMenuActivity::class.java))
-            finishAffinity()
+            startActivity(Intent(this, MainMenuActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
         }
         btnGames.setOnClickListener {
             val gamesUrl = configManager.gamesUrl
@@ -271,6 +270,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun onContentClicked(item: ContentItem) {
+        Toast.makeText(this, "Carregando: ${item.name}", Toast.LENGTH_SHORT).show()
         when (item) {
             is ContentItem.Live -> playStream(item.streamUrl(
                 configManager.panelUrl, configManager.username, configManager.password,
@@ -388,53 +388,64 @@ class PlayerActivity : AppCompatActivity() {
 
             exoPlayer?.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
-                when (state) {
-                    Player.STATE_READY -> {
-                        hideProgress?.let { handler.removeCallbacks(it) }
-                        runOnUiThread {
-                            progressBar.visibility = View.GONE
-                            layoutNoSignal.visibility = View.GONE
+                if (isFinishing || isDestroyed) return
+                try {
+                    when (state) {
+                        Player.STATE_READY -> {
+                            hideProgress?.let { handler.removeCallbacks(it) }
+                            runOnUiThread {
+                                if (isFinishing || isDestroyed) return@runOnUiThread
+                                progressBar.visibility = View.GONE
+                                layoutNoSignal.visibility = View.GONE
+                            }
+                        }
+                        Player.STATE_ENDED, Player.STATE_IDLE -> {
+                            runOnUiThread {
+                                if (isFinishing || isDestroyed) return@runOnUiThread
+                                progressBar.visibility = View.GONE
+                            }
                         }
                     }
-                    Player.STATE_ENDED, Player.STATE_IDLE -> {
-                        runOnUiThread { progressBar.visibility = View.GONE }
-                    }
-                }
+                } catch (_: Exception) {}
             }
 
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                if (isFinishing || isDestroyed) return
                 hideProgress?.let { handler.removeCallbacks(it) }
-                runOnUiThread {
-                    progressBar.visibility = View.GONE
-                    var detail = error.localizedMessage ?: error.cause?.message ?: ""
-                    val cause = error.cause
-                    if (error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS) {
-                        if (cause is HttpDataSource.InvalidResponseCodeException) {
+                try {
+                    runOnUiThread {
+                        if (isFinishing || isDestroyed) return@runOnUiThread
+                        progressBar.visibility = View.GONE
+                        var detail = error.localizedMessage ?: error.cause?.message ?: ""
+                        val cause = error.cause
+                        if (error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS) {
+                            if (cause is HttpDataSource.InvalidResponseCodeException) {
+                                detail = "HTTP ${cause.responseCode}: ${cause.responseMessage}"
+                            }
+                        } else if (cause is HttpDataSource.InvalidResponseCodeException) {
                             detail = "HTTP ${cause.responseCode}: ${cause.responseMessage}"
                         }
-                    } else if (cause is HttpDataSource.InvalidResponseCodeException) {
-                        detail = "HTTP ${cause.responseCode}: ${cause.responseMessage}"
+                        val code = error.errorCode
+                        val msg = when (code) {
+                            androidx.media3.common.PlaybackException.ERROR_CODE_TIMEOUT -> "Tempo limite excedido ao conectar"
+                            androidx.media3.common.PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> "Erro de conexão com o servidor"
+                            androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> "Erro HTTP da fonte ($detail)"
+                            androidx.media3.common.PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> "Sinal ao vivo perdido"
+                            androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FAILED -> "Falha ao decodificar video"
+                            androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED -> "Formato de video nao suportado"
+                            androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES -> "Video excede capacidade do aparelho (codec/resolucao)"
+                            else -> "Erro (código $code): $detail"
+                        }
+                        if (code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES ||
+                            code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ||
+                            code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FAILED) {
+                            layoutNoSignal.visibility = View.VISIBLE
+                            Toast.makeText(this@PlayerActivity, "Sem sinal", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
+                        }
                     }
-                    val code = error.errorCode
-                    val msg = when (code) {
-                        androidx.media3.common.PlaybackException.ERROR_CODE_TIMEOUT -> "Tempo limite excedido ao conectar"
-                        androidx.media3.common.PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> "Erro de conexão com o servidor"
-                        androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> "Erro HTTP da fonte ($detail)"
-                        androidx.media3.common.PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> "Sinal ao vivo perdido"
-                        androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FAILED -> "Falha ao decodificar video"
-                        androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED -> "Formato de video nao suportado"
-                        androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES -> "Video excede capacidade do aparelho (codec/resolucao)"
-                        else -> "Erro (código $code): $detail"
-                    }
-                    if (code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES ||
-                        code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ||
-                        code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FAILED) {
-                        layoutNoSignal.visibility = View.VISIBLE
-                        Toast.makeText(this@PlayerActivity, "Sem sinal", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
-                    }
-                }
+                } catch (_: Exception) {}
             }
         })
 
