@@ -260,9 +260,7 @@
                         android:layout_height="match_parent"
                         app:use_controller="true"
                         app:show_buffering="when_playing"
-                        app:resize_mode="fit"
-                        app:show_fastforward_button="false"
-                        app:show_rewind_button="false" />
+                        app:resize_mode="fit" />
 
                     <ProgressBar
                         android:id="@+id/progressBar"
