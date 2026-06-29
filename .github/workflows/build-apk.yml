@@ -162,9 +162,13 @@ jobs:
             fi
           fi
 
+      - name: Clean build
+        run: |
+          gradle clean --no-daemon 2>&1 || true
+
       - name: Build
         run: |
-          gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/gradle_output.txt
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/gradle_output.txt
           exit ${PIPESTATUS[0]}
         env:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
