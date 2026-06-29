@@ -331,8 +331,18 @@ class PlayerActivity : AppCompatActivity() {
 
         val playUrl = url
         CoroutineScope(Dispatchers.Main).launch {
-            val resolvedUrl = withContext(Dispatchers.IO) {
-                networkUtils.resolveDirectUrl(playUrl)
+            val resolvedUrl = try {
+                withContext(Dispatchers.IO) {
+                    networkUtils.resolveDirectUrl(playUrl)
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@PlayerActivity, "Erro ao resolver URL: ${e.message}", Toast.LENGTH_LONG).show()
+                return@launch
+            }
+
+            if (resolvedUrl.isBlank()) {
+                Toast.makeText(this@PlayerActivity, "URL do stream vazia", Toast.LENGTH_LONG).show()
+                return@launch
             }
 
             if (configManager.playerType == "external") {
