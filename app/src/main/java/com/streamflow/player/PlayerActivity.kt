@@ -360,21 +360,27 @@ class PlayerActivity : AppCompatActivity() {
                 return@launch
             }
 
-            exoPlayer?.release()
+            try {
+                exoPlayer?.release()
+                playerView.player = null
 
-            val dataSourceFactory = DefaultHttpDataSource.Factory()
-                .setAllowCrossProtocolRedirects(true)
-                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-            val mediaSourceFactory = DefaultMediaSourceFactory(this@PlayerActivity).setDataSourceFactory(dataSourceFactory)
-            exoPlayer = ExoPlayer.Builder(this@PlayerActivity)
-                .setMediaSourceFactory(mediaSourceFactory)
-                .build()
-            playerView.player = exoPlayer
+                val dataSourceFactory = DefaultHttpDataSource.Factory()
+                    .setAllowCrossProtocolRedirects(true)
+                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                val mediaSourceFactory = DefaultMediaSourceFactory(this@PlayerActivity).setDataSourceFactory(dataSourceFactory)
+                exoPlayer = ExoPlayer.Builder(this@PlayerActivity)
+                    .setMediaSourceFactory(mediaSourceFactory)
+                    .build()
+                playerView.player = exoPlayer
 
-            val mediaItem = MediaItem.fromUri(resolvedUrl)
-            exoPlayer?.setMediaItem(mediaItem)
-            exoPlayer?.prepare()
-            exoPlayer?.play()
+                val mediaItem = MediaItem.fromUri(resolvedUrl)
+                exoPlayer?.setMediaItem(mediaItem)
+                exoPlayer?.prepare()
+                exoPlayer?.play()
+            } catch (e: Exception) {
+                Toast.makeText(this@PlayerActivity, "Erro ao reproduzir: ${e.message}", Toast.LENGTH_LONG).show()
+                return@launch
+            }
 
             progressBar.visibility = View.VISIBLE
 
@@ -433,10 +439,13 @@ class PlayerActivity : AppCompatActivity() {
         })
 
         hideProgress = Runnable {
+            if (isFinishing || isDestroyed) return@Runnable
             runOnUiThread {
                 if (progressBar.visibility == View.VISIBLE) {
                     progressBar.visibility = View.GONE
-                    Toast.makeText(this@PlayerActivity, "O stream demorou muito para carregar", Toast.LENGTH_LONG).show()
+                    try {
+                        Toast.makeText(this@PlayerActivity, "O stream demorou muito para carregar", Toast.LENGTH_LONG).show()
+                    } catch (_: Exception) {}
                 }
             }
         }
@@ -463,6 +472,12 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    override fun onBackPressed() {
+        if (isFullscreen) {
+            toggleFullscreen()
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         exoPlayer?.pause()
@@ -475,6 +490,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        handler.removeCallbacksAndMessages(null)
         exoPlayer?.release()
     }
 }

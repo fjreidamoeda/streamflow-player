@@ -86,9 +86,17 @@ class MainMenuActivity : AppCompatActivity() {
             }
         }
         findViewById<Button>(R.id.btnLogout).setOnClickListener {
-            configManager.clear()
-            startActivity(Intent(this, SetupActivity::class.java))
-            finishAffinity()
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Sair")
+                .setMessage("Deseja realmente sair?")
+                .setPositiveButton("Sim") { _, _ ->
+                    configManager.clear()
+                    startActivity(Intent(this, SetupActivity::class.java))
+                    finishAffinity()
+                }
+                .setNegativeButton("Nao", null)
+                .setCancelable(true)
+                .show()
         }
 
         fetchApkMessages()
