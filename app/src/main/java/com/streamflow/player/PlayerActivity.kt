@@ -329,20 +329,18 @@ class PlayerActivity : AppCompatActivity() {
         tvNowPlaying.text = "▶ $title"
         layoutNoSignal.visibility = View.GONE
 
-        val playUrl = url
         CoroutineScope(Dispatchers.Main).launch {
-            val resolvedUrl = try {
-                withContext(Dispatchers.IO) {
-                    networkUtils.resolveDirectUrl(playUrl)
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this@PlayerActivity, "Erro ao resolver URL: ${e.message}", Toast.LENGTH_LONG).show()
-                return@launch
-            }
+            var playUrl = url
 
-            if (resolvedUrl.isBlank()) {
-                Toast.makeText(this@PlayerActivity, "URL do stream vazia", Toast.LENGTH_LONG).show()
-                return@launch
+            // Try resolveDirectUrl, fallback to original URL on any error
+            val resolved = try {
+                withContext(Dispatchers.IO) {
+                    val r = networkUtils.resolveDirectUrl(url)
+                    if (r.isNotBlank() && r.startsWith("http")) r else ""
+                }
+            } catch (_: Exception) { "" }
+            if (resolved.isNotBlank()) {
+                playUrl = resolved
             }
 
             if (configManager.playerType == "external") {
@@ -350,7 +348,7 @@ class PlayerActivity : AppCompatActivity() {
                 playerView.player = null
                 try {
                     val intent = Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(Uri.parse(resolvedUrl), "video/*")
+                        setDataAndType(Uri.parse(playUrl), "video/*")
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                     startActivity(intent)
@@ -373,10 +371,11 @@ class PlayerActivity : AppCompatActivity() {
                     .build()
                 playerView.player = exoPlayer
 
-                val mediaItem = MediaItem.fromUri(resolvedUrl)
+                val mediaItem = MediaItem.fromUri(playUrl)
                 exoPlayer?.setMediaItem(mediaItem)
                 exoPlayer?.prepare()
                 exoPlayer?.play()
+                Toast.makeText(this@PlayerActivity, "Player iniciado", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(this@PlayerActivity, "Erro ao reproduzir: ${e.message}", Toast.LENGTH_LONG).show()
                 return@launch
