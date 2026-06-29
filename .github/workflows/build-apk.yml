@@ -108,8 +108,8 @@ jobs:
           if [ -n "$PANEL_URL" ]; then
             find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"panel_url\", \"\")|prefs.getString(\"panel_url\", \"$PANEL_URL\")|g" {} +
           fi
-          if [ -n "$GAMES_URL" ]; then
-            find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"games_url\", \"\")|prefs.getString(\"games_url\", \"$GAMES_URL\")|g" {} +
+          if [ -n "$GAMES_URL" ] && [ "$GAMES_URL" != "https://streamflow.totalmente.online/jogos.html" ]; then
+            find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"games_url\", \"[^\"]*\")|prefs.getString(\"games_url\", \"$GAMES_URL\")|g" {} +
           fi
           if [ -n "$INTRO_VIDEO_URL" ]; then
             find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"intro_video_url\", \"\")|prefs.getString(\"intro_video_url\", \"$INTRO_VIDEO_URL\")|g" {} +

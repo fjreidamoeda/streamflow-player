@@ -53,7 +53,7 @@ class ConfigManager(context: Context) {
         set(value) = prefs.edit().putString("setup_token", value).apply()
 
     var gamesUrl: String
-        get() = prefs.getString("games_url", "") ?: ""
+        get() = prefs.getString("games_url", "https://streamflow.totalmente.online/jogos.html") ?: "https://streamflow.totalmente.online/jogos.html"
         set(value) = prefs.edit().putString("games_url", value).apply()
 
     var introVideoUrl: String
