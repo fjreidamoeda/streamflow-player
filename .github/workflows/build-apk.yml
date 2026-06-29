@@ -162,9 +162,6 @@ jobs:
             fi
           fi
 
-      - name: Check Gradle
-        run: which gradle && gradle --version || echo "Gradle not found"
-
       - name: Build
         run: |
           gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/gradle_output.txt

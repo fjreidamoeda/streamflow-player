@@ -264,7 +264,7 @@ class NetworkUtils {
             val url = "$proxyUrl${sep}return_url=1"
             val request = Request.Builder().url(url).build()
             val response = client.newCall(request).execute()
-            val ct = response.header("Content-Type", "")
+            val ct = response.header("Content-Type") ?: ""
             // If server returns video/binary content, skip resolution
             if (ct.isNotBlank() && !ct.startsWith("text/") && !ct.startsWith("application/json") && !ct.contains("javascript")) {
                 return@withContext proxyUrl
