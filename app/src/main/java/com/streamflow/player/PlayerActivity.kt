@@ -50,6 +50,10 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var etSearch: EditText
     private lateinit var btnBack: ImageButton
+    private lateinit var btnHome: ImageButton
+    private lateinit var btnGames: ImageButton
+    private lateinit var btnVolume: ImageButton
+    private lateinit var layoutNoSignal: View
     private lateinit var mainLayout: View
     private lateinit var columnCategories: View
     private lateinit var columnContent: View
@@ -87,6 +91,10 @@ class PlayerActivity : AppCompatActivity() {
         tvNowPlaying = findViewById(R.id.tvNowPlaying)
         progressBar = findViewById(R.id.progressBar)
         btnBack = findViewById(R.id.btnBack)
+        btnHome = findViewById(R.id.btnHome)
+        btnGames = findViewById(R.id.btnGames)
+        btnVolume = findViewById(R.id.btnVolume)
+        layoutNoSignal = findViewById(R.id.layoutNoSignal)
         mainLayout = findViewById(R.id.mainLayout)
         columnCategories = findViewById(R.id.columnCategories)
         columnContent = findViewById(R.id.columnContent)
@@ -123,6 +131,33 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
 
+        btnHome.setOnClickListener {
+            startActivity(Intent(this, MainMenuActivity::class.java))
+            finishAffinity()
+        }
+        btnGames.setOnClickListener {
+            val gamesUrl = configManager.gamesUrl
+            if (gamesUrl.isNotBlank()) {
+                try {
+                    val intent = Intent(this, WebViewActivity::class.java).apply {
+                        putExtra("url", gamesUrl)
+                        putExtra("title", "Jogos")
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Erro ao abrir jogos", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Link dos jogos nao configurado", Toast.LENGTH_SHORT).show()
+            }
+        }
+        btnVolume.setOnClickListener {
+            exoPlayer?.let { player ->
+                player.volume = if (player.volume > 0f) 0f else 1f
+                btnVolume.setImageResource(if (player.volume > 0f) R.drawable.ic_volume else R.drawable.ic_volume_off)
+            }
+        }
+
         etSearch.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -146,6 +181,11 @@ class PlayerActivity : AppCompatActivity() {
         selectedCategoryId = null
         selectedSeries = null
         showingEpisodes = false
+
+        // Clear content immediately when switching menus
+        contentItems = listOf()
+        contentAdapter = null
+        rvContent.adapter = null
 
         val activated = 0xffe63e2e.toInt()
         val deactivated = 0xff333333.toInt()
@@ -287,6 +327,7 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         tvNowPlaying.text = "▶ $title"
+        layoutNoSignal.visibility = View.GONE
 
         val playUrl = url
         CoroutineScope(Dispatchers.Main).launch {
@@ -334,7 +375,10 @@ class PlayerActivity : AppCompatActivity() {
                 when (state) {
                     Player.STATE_READY -> {
                         hideProgress?.let { handler.removeCallbacks(it) }
-                        runOnUiThread { progressBar.visibility = View.GONE }
+                        runOnUiThread {
+                            progressBar.visibility = View.GONE
+                            layoutNoSignal.visibility = View.GONE
+                        }
                     }
                     Player.STATE_ENDED, Player.STATE_IDLE -> {
                         runOnUiThread { progressBar.visibility = View.GONE }
@@ -369,6 +413,7 @@ class PlayerActivity : AppCompatActivity() {
                     if (code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES ||
                         code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ||
                         code == androidx.media3.common.PlaybackException.ERROR_CODE_DECODING_FAILED) {
+                        layoutNoSignal.visibility = View.VISIBLE
                         Toast.makeText(this@PlayerActivity, "Sem sinal", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
