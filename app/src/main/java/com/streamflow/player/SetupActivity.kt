@@ -26,9 +26,16 @@ class SetupActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_setup)
 
         configManager = ConfigManager(this)
+
+        // Auto-connect silently if pre-configured
+        if (configManager.token.isNotBlank() && configManager.panelUrl.isNotBlank()) {
+            connectToPanel(configManager.token, configManager.panelUrl)
+            return
+        }
+
+        setContentView(R.layout.activity_setup)
 
         etToken = findViewById(R.id.etToken)
         etPanelUrl = findViewById(R.id.etPanelUrl)
@@ -41,11 +48,6 @@ class SetupActivity : AppCompatActivity() {
         }
         if (configManager.panelUrl.isNotBlank()) {
             etPanelUrl.setText(configManager.panelUrl)
-        }
-
-        // Auto-connect if both token and panel URL are pre-configured
-        if (configManager.token.isNotBlank() && configManager.panelUrl.isNotBlank()) {
-            btnConnect.post { btnConnect.performClick() }
         }
 
         btnConnect.setOnClickListener {
@@ -67,32 +69,33 @@ class SetupActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            tvStatus.visibility = TextView.GONE
-            progressBar.visibility = ProgressBar.VISIBLE
-            btnConnect.isEnabled = false
+            connectToPanel(token, panelUrl)
+        }
+    }
 
-            val finalPanelUrl = panelUrl
-            CoroutineScope(Dispatchers.Main).launch {
-                val result = withContext(Dispatchers.IO) {
-                    fetchConfig(finalPanelUrl, token)
-                }
+    private fun connectToPanel(token: String, panelUrl: String) {
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = withContext(Dispatchers.IO) {
+                fetchConfig(panelUrl, token)
+            }
 
-                progressBar.visibility = ProgressBar.GONE
-                btnConnect.isEnabled = true
+            result?.let { config ->
+                configManager.token = token
+                configManager.panelUrl = panelUrl
+                configManager.gamesUrl = config.gamesUrl
+                configManager.introVideoUrl = config.introVideoUrl
+                configManager.customPanelUrl = config.customPanelUrl
+                configManager.appName = config.appName
+                configManager.logoUrl = config.logoUrl
+                configManager.backgroundUrl = config.backgroundUrl
 
-                result?.let { config ->
-                    configManager.token = token
-                    configManager.panelUrl = finalPanelUrl
-                    configManager.gamesUrl = config.gamesUrl
-                    configManager.introVideoUrl = config.introVideoUrl
-                    configManager.customPanelUrl = config.customPanelUrl
-                    configManager.appName = config.appName
-                    configManager.logoUrl = config.logoUrl
-                    configManager.backgroundUrl = config.backgroundUrl
-
-                    startActivity(Intent(this@SetupActivity, LoginActivity::class.java))
-                    finish()
-                } ?: run {
+                startActivity(Intent(this@SetupActivity, LoginActivity::class.java))
+                finish()
+            } ?: run {
+                if (!::etToken.isInitialized) {
+                    // Pre-config failed silently - show UI and let user retry
+                    recreate()
+                } else {
                     tvStatus.text = "Token invalido ou sem conexao com o painel"
                     tvStatus.visibility = TextView.VISIBLE
                 }

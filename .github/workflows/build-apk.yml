@@ -96,11 +96,11 @@ jobs:
 
       - name: Patch app name and URLs
         run: |
-          APP_NAME="${{ inputs.app_name }}"
-          PANEL_URL="${{ inputs.panel_url }}"
-          GAMES_URL="${{ inputs.games_url }}"
-          INTRO_VIDEO_URL="${{ inputs.intro_video_url }}"
-          CUSTOM_PANEL_URL="${{ inputs.custom_panel_url }}"
+          APP_NAME="${{ inputs.app_name || 'StreamFlow' }}"
+          PANEL_URL="${{ inputs.panel_url || vars.PANEL_URL || '' }}"
+          GAMES_URL="${{ inputs.games_url || vars.GAMES_URL || '' }}"
+          INTRO_VIDEO_URL="${{ inputs.intro_video_url || vars.INTRO_VIDEO_URL || '' }}"
+          CUSTOM_PANEL_URL="${{ inputs.custom_panel_url || vars.CUSTOM_PANEL_URL || '' }}"
 
           # Patch app_name in ConfigManager and strings.xml
           if [ -n "$APP_NAME" ] && [ "$APP_NAME" != "StreamFlow" ]; then
@@ -121,7 +121,7 @@ jobs:
           if [ -n "$CUSTOM_PANEL_URL" ]; then
             find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"custom_panel_url\", \"\")|prefs.getString(\"custom_panel_url\", \"$CUSTOM_PANEL_URL\")|g" {} +
           fi
-          SETUP_TOKEN="${{ inputs.setup_token }}"
+          SETUP_TOKEN="${{ inputs.setup_token || vars.SETUP_TOKEN || '' }}"
           if [ -n "$SETUP_TOKEN" ]; then
             find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"setup_token\", \"\")|prefs.getString(\"setup_token\", \"$SETUP_TOKEN\")|g" {} +
           fi
