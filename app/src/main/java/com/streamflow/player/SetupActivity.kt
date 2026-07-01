@@ -38,18 +38,6 @@ class SetupActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        try {
-            _onCreate()
-        } catch (e: Exception) {
-            setContentView(R.layout.activity_setup)
-            tvStatus = findViewById(R.id.tvStatus)
-            tvStatus.text = "ERRO: ${e.message}"
-            tvStatus.visibility = TextView.VISIBLE
-            e.printStackTrace()
-        }
-    }
-
-    private fun _onCreate() {
         setContentView(R.layout.activity_setup)
 
         configManager = ConfigManager(this)
@@ -219,3 +207,4 @@ class SetupActivity : AppCompatActivity() {
         val customPanelUrl: String = ""
     )
 }
+
