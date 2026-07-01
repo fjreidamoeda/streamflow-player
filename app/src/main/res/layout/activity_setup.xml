@@ -47,27 +47,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Token de Configuracao"
-                    android:textColor="#aaaaaa"
-                    android:textSize="12sp"
-                    android:layout_marginBottom="6dp" />
-
-                <EditText
-                    android:id="@+id/etToken"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="Cole seu token aqui"
-                    android:textColor="#ffffff"
-                    android:textColorHint="#666666"
-                    android:background="@drawable/bg_input"
-                    android:paddingHorizontal="16dp"
-                    android:inputType="text"
-                    android:layout_marginBottom="16dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="URL do Painel (opcional)"
+                    android:text="URL do Painel"
                     android:textColor="#aaaaaa"
                     android:textSize="12sp"
                     android:layout_marginBottom="6dp" />

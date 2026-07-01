@@ -18,7 +18,6 @@ import java.net.URL
 class SetupActivity : AppCompatActivity() {
 
     private lateinit var configManager: ConfigManager
-    private lateinit var etToken: EditText
     private lateinit var etPanelUrl: EditText
     private lateinit var btnConnect: Button
     private lateinit var progressBar: ProgressBar
@@ -35,31 +34,28 @@ class SetupActivity : AppCompatActivity() {
             return
         }
 
-        setContentView(R.layout.activity_setup)
+        setupUI()
+    }
 
-        etToken = findViewById(R.id.etToken)
+    private var uiInitialized = false
+    private var connecting = false
+
+    private fun setupUI() {
+        setContentView(R.layout.activity_setup)
+        uiInitialized = true
+
         etPanelUrl = findViewById(R.id.etPanelUrl)
         btnConnect = findViewById(R.id.btnConnect)
         progressBar = findViewById(R.id.progressBar)
         tvStatus = findViewById(R.id.tvStatus)
 
-        if (configManager.token.isNotBlank()) {
-            etToken.setText(configManager.token)
-        }
         if (configManager.panelUrl.isNotBlank()) {
             etPanelUrl.setText(configManager.panelUrl)
         }
 
         btnConnect.setOnClickListener {
-            val token = etToken.text.toString().trim()
+            if (connecting) return@setOnClickListener
             var panelUrl = etPanelUrl.text.toString().trim()
-
-            if (token.isBlank()) {
-                tvStatus.text = "Informe o token de configuracao"
-                tvStatus.visibility = TextView.VISIBLE
-                return@setOnClickListener
-            }
-
             if (panelUrl.isBlank()) {
                 panelUrl = configManager.panelUrl
             }
@@ -68,8 +64,11 @@ class SetupActivity : AppCompatActivity() {
                 tvStatus.visibility = TextView.VISIBLE
                 return@setOnClickListener
             }
-
-            connectToPanel(token, panelUrl)
+            tvStatus.visibility = TextView.GONE
+            progressBar.visibility = ProgressBar.VISIBLE
+            btnConnect.isEnabled = false
+            connecting = true
+            connectToPanel(configManager.token, panelUrl)
         }
     }
 
@@ -77,6 +76,12 @@ class SetupActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             val result = withContext(Dispatchers.IO) {
                 fetchConfig(panelUrl, token)
+            }
+
+            if (uiInitialized) {
+                progressBar.visibility = ProgressBar.GONE
+                btnConnect.isEnabled = true
+                connecting = false
             }
 
             result?.let { config ->
@@ -92,9 +97,11 @@ class SetupActivity : AppCompatActivity() {
                 startActivity(Intent(this@SetupActivity, LoginActivity::class.java))
                 finish()
             } ?: run {
-                if (!::etToken.isInitialized) {
-                    // Pre-config failed silently - show UI and let user retry
-                    recreate()
+                if (!uiInitialized) {
+                    // Pre-config failed - show UI and let user retry
+                    setupUI()
+                    tvStatus.text = "Nao foi possivel conectar. Verifique a URL do painel."
+                    tvStatus.visibility = TextView.VISIBLE
                 } else {
                     tvStatus.text = "Token invalido ou sem conexao com o painel"
                     tvStatus.visibility = TextView.VISIBLE
