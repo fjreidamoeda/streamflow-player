@@ -54,7 +54,7 @@ class ConfigManager(context: Context) {
 
     var gamesUrl: String
         get() {
-            val v = prefs.getString("games_url", "")
+            val v = prefs.getString("games_url", "") ?: ""
             if (v.isNotBlank()) return v
             val panel = panelUrl
             return if (panel.isNotBlank()) "${panel.trimEnd('/')}/jogos.html" else "https://streamflow.totalmente.online/jogos.html"
