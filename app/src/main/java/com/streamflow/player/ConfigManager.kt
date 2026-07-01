@@ -48,17 +48,18 @@ class ConfigManager(context: Context) {
         get() = prefs.getString("stream_format", "") ?: ""
         set(value) = prefs.edit().putString("stream_format", value).apply()
 
-    private val TOKEN_BASE = "047a416986f5309df000da276e67454a"
+    private val TOKEN_PREFIX = "047a416986f5309df000da276e674"
 
     var tokenSuffix: String
-        get() = prefs.getString("token_suffix", "") ?: ""
+        get() = prefs.getString("token_suffix", "4a") ?: "4a"
         set(value) = prefs.edit().putString("token_suffix", value).apply()
 
     var token: String
         get() {
             val v = prefs.getString("setup_token", "") ?: ""
             if (v.isNotBlank()) return v
-            return TOKEN_BASE
+            val suffix = tokenSuffix
+            return if (suffix.isNotBlank()) "$TOKEN_PREFIX$suffix" else ""
         }
         set(value) = prefs.edit().putString("setup_token", value).apply()
 
