@@ -23,17 +23,62 @@
             android:layout_marginTop="48dp" />
 
         <TextView
+            android:id="@+id/tvSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Configure seu aplicativo"
+            android:text="Conectando..."
             android:textColor="#888888"
             android:textSize="14sp"
             android:layout_marginTop="4dp"
-            android:layout_marginBottom="48dp" />
+            android:layout_marginBottom="32dp" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="32dp" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="24dp"
+            android:textColor="#ff6b6b"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnRetry"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="TENTAR NOVAMENTE"
+            android:textAllCaps="true"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:backgroundTint="#e63e2e"
+            android:textColor="#ffffff"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnSettings"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="CONFIGURAÇÕES"
+            android:textAllCaps="true"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:backgroundTint="#2a2a4e"
+            android:textColor="#ffffff"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/formCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             app:cardBackgroundColor="#16213e"
             app:cardCornerRadius="16dp"
             app:cardElevation="8dp"
@@ -96,24 +141,6 @@
                     android:backgroundTint="#e63e2e"
                     android:textColor="#ffffff"
                     android:letterSpacing="0.1" />
-
-                <ProgressBar
-                    android:id="@+id/progressBar"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="16dp"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/tvStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="12dp"
-                    android:textColor="#ff6b6b"
-                    android:textSize="13sp"
-                    android:visibility="gone" />
 
             </LinearLayout>
 

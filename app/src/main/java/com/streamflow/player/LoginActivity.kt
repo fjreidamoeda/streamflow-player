@@ -22,6 +22,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var etUsername: EditText
     private lateinit var etPassword: EditText
     private lateinit var btnLogin: Button
+    private lateinit var btnSettings: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var tvError: TextView
     private var bgTarget: com.squareup.picasso.Target? = null
@@ -36,8 +37,15 @@ class LoginActivity : AppCompatActivity() {
         etUsername = findViewById(R.id.etUsername)
         etPassword = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
+        btnSettings = findViewById(R.id.btnSettings)
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
+
+        btnSettings.setOnClickListener {
+            val intent = Intent(this, SetupActivity::class.java)
+            intent.putExtra("show_settings", true)
+            startActivity(intent)
+        }
 
         val ivLogo = findViewById<ImageView>(R.id.ivLogo)
         val tvTitle = findViewById<TextView>(R.id.tvTitle)
