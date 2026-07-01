@@ -21,7 +21,7 @@ class ConfigManager(context: Context) {
         context.getSharedPreferences("streamflow_config", Context.MODE_PRIVATE)
 
     private var storedPanelUrl: String
-        get() = prefs.getString("panel_url", "") ?: ""
+        get() = prefs.getString("panel_url", "https://streamflow.totalmente.online") ?: "https://streamflow.totalmente.online"
         set(value) = prefs.edit().putString("panel_url", value.trimEnd('/')).apply()
 
     var panelUrl: String
@@ -49,7 +49,11 @@ class ConfigManager(context: Context) {
         set(value) = prefs.edit().putString("stream_format", value).apply()
 
     var token: String
-        get() = prefs.getString("setup_token", "") ?: ""
+        get() {
+            val v = prefs.getString("setup_token", "") ?: ""
+            if (v.isNotBlank()) return v
+            return "fenix2026-$appName"
+        }
         set(value) = prefs.edit().putString("setup_token", value).apply()
 
     var gamesUrl: String

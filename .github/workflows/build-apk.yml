@@ -109,8 +109,8 @@ jobs:
           fi
 
           # Create BuildConfig-style defaults
-          if [ -n "$PANEL_URL" ]; then
-            find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"panel_url\", \"\")|prefs.getString(\"panel_url\", \"$PANEL_URL\")|g" {} +
+          if [ -n "$PANEL_URL" ] && [ "$PANEL_URL" != "https://streamflow.totalmente.online" ]; then
+            find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"panel_url\", \"https://streamflow.totalmente.online\")|prefs.getString(\"panel_url\", \"$PANEL_URL\")|g" {} +
           fi
           if [ -n "$GAMES_URL" ]; then
             find app/src -name "ConfigManager.kt" -exec sed -i "s|\${panel.trimEnd('/')}/jogos.html|$GAMES_URL|g" {} +
