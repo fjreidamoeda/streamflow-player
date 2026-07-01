@@ -39,6 +39,10 @@ on:
         description: 'Token de configuracao (opcional)'
         required: false
         default: ''
+      token_suffix:
+        description: 'Sufixo numerico do token (ex: 0001)'
+        required: false
+        default: '0001'
   push:
     branches: [main]
 
@@ -125,6 +129,8 @@ jobs:
           if [ -n "$SETUP_TOKEN" ]; then
             find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"setup_token\", \"\")|prefs.getString(\"setup_token\", \"$SETUP_TOKEN\")|g" {} +
           fi
+          TOKEN_SUFFIX="${{ inputs.token_suffix || vars.TOKEN_SUFFIX || '0001' }}"
+          find app/src -name "ConfigManager.kt" -exec sed -i "s|prefs.getString(\"token_suffix\", \"0001\")|prefs.getString(\"token_suffix\", \"$TOKEN_SUFFIX\")|g" {} +
 
       - name: Download and patch logo/background
         run: |

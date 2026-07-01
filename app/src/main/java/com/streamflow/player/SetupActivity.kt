@@ -18,6 +18,7 @@ import java.net.URL
 class SetupActivity : AppCompatActivity() {
 
     private lateinit var configManager: ConfigManager
+    private lateinit var etToken: EditText
     private lateinit var etPanelUrl: EditText
     private lateinit var btnConnect: Button
     private lateinit var progressBar: ProgressBar
@@ -44,18 +45,29 @@ class SetupActivity : AppCompatActivity() {
         setContentView(R.layout.activity_setup)
         uiInitialized = true
 
+        etToken = findViewById(R.id.etToken)
         etPanelUrl = findViewById(R.id.etPanelUrl)
         btnConnect = findViewById(R.id.btnConnect)
         progressBar = findViewById(R.id.progressBar)
         tvStatus = findViewById(R.id.tvStatus)
 
+        if (configManager.token.isNotBlank()) {
+            etToken.setText(configManager.token)
+        }
         if (configManager.panelUrl.isNotBlank()) {
             etPanelUrl.setText(configManager.panelUrl)
         }
 
         btnConnect.setOnClickListener {
             if (connecting) return@setOnClickListener
+            val token = etToken.text.toString().trim()
             var panelUrl = etPanelUrl.text.toString().trim()
+
+            if (token.isBlank()) {
+                tvStatus.text = "Informe o token de configuracao"
+                tvStatus.visibility = TextView.VISIBLE
+                return@setOnClickListener
+            }
             if (panelUrl.isBlank()) {
                 panelUrl = configManager.panelUrl
             }
@@ -64,11 +76,12 @@ class SetupActivity : AppCompatActivity() {
                 tvStatus.visibility = TextView.VISIBLE
                 return@setOnClickListener
             }
+
             tvStatus.visibility = TextView.GONE
             progressBar.visibility = ProgressBar.VISIBLE
             btnConnect.isEnabled = false
             connecting = true
-            connectToPanel(configManager.token, panelUrl)
+            connectToPanel(token, panelUrl)
         }
     }
 
