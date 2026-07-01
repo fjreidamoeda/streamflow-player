@@ -62,7 +62,12 @@ class ConfigManager(context: Context) {
         set(value) = prefs.edit().putString("games_url", value).apply()
 
     var introVideoUrl: String
-        get() = prefs.getString("intro_video_url", "") ?: ""
+        get() {
+            val v = prefs.getString("intro_video_url", "") ?: ""
+            if (v.isNotBlank()) return v
+            val panel = panelUrl
+            return if (panel.isNotBlank()) "${panel.trimEnd('/')}/intro.mp4" else ""
+        }
         set(value) = prefs.edit().putString("intro_video_url", value).apply()
 
     var customPanelUrl: String
