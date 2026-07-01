@@ -142,18 +142,23 @@ jobs:
 
       - name: Download and patch logo/background
         run: |
+          is_image() {
+            local f="$1"
+            [ -f "$f" ] && [ -s "$f" ] && file -b --mime-type "$f" | grep -q "^image/"
+          }
+
           LOGO_URL="${{ inputs.logo_url }}"
           BG_URL="${{ inputs.background_url }}"
+
           if [ -n "$LOGO_URL" ]; then
-            curl -sL "$LOGO_URL" -o /tmp/logo.png
-            if [ -f /tmp/logo.png ] && [ -s /tmp/logo.png ]; then
+            curl -sL "$LOGO_URL" -o /tmp/logo_downloaded
+            if is_image /tmp/logo_downloaded; then
               mkdir -p app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-mdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi
-              cp /tmp/logo.png app/src/main/res/mipmap-hdpi/ic_launcher.png
-              cp /tmp/logo.png app/src/main/res/mipmap-mdpi/ic_launcher.png
-              cp /tmp/logo.png app/src/main/res/mipmap-xhdpi/ic_launcher.png
-              cp /tmp/logo.png app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-              cp /tmp/logo.png app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-              # Create ic_launcher.xml adaptive icon
+              cp /tmp/logo_downloaded app/src/main/res/mipmap-hdpi/ic_launcher.png
+              cp /tmp/logo_downloaded app/src/main/res/mipmap-mdpi/ic_launcher.png
+              cp /tmp/logo_downloaded app/src/main/res/mipmap-xhdpi/ic_launcher.png
+              cp /tmp/logo_downloaded app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+              cp /tmp/logo_downloaded app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
               mkdir -p app/src/main/res/mipmap-anydpi-v26
               printf '%s\n' \
                 '<?xml version="1.0" encoding="utf-8"?>' \
@@ -163,16 +168,23 @@ jobs:
                 '</adaptive-icon>' \
                 > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
               sed -i 's|android:icon="@drawable/ic_tv"|android:icon="@mipmap/ic_launcher"|' app/src/main/AndroidManifest.xml
+              echo "Logo installed as app icon"
+            else
+              echo "WARNING: Logo download is not a valid image, skipping icon patch"
             fi
           fi
+
           if [ -n "$BG_URL" ]; then
-            curl -sL "$BG_URL" -o app/src/main/res/drawable/bg_main.png
-            if [ -f app/src/main/res/drawable/bg_main.png ] && [ -s app/src/main/res/drawable/bg_main.png ]; then
+            curl -sL "$BG_URL" -o /tmp/bg_downloaded
+            if is_image /tmp/bg_downloaded; then
+              cp /tmp/bg_downloaded app/src/main/res/drawable/bg_main.png
               for layout in app/src/main/res/layout/*.xml; do
-                # Remove any existing android:background and add our drawable
                 sed -i 's|android:background="@drawable/[^"]*"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
                 sed -i 's|android:background="#[A-Fa-f0-9]*"|android:background="@drawable/bg_main"|g' "$layout" 2>/dev/null || true
               done
+              echo "Background installed"
+            else
+              echo "WARNING: Background download is not a valid image, skipping background patch"
             fi
           fi
 
